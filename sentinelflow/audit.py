@@ -135,7 +135,7 @@ class AuditTrail:
             metadata=metadata,
         )
 
-    def verify_integrity(self) -> Tuple[bool, Optional[str]]:
+    def verify_integrity(self) -> tuple[bool, Optional[str]]:
         """Cryptographically verify the entire audit log chain for tampering.
 
         Returns:
