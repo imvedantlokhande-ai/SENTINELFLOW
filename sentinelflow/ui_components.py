@@ -285,6 +285,34 @@ def inject_custom_css():
         border-radius: 6px !important;
     }}
 
+    /* Futuristic Cyber SOC Sidebar (PC, Laptop, Tablet & Mobile) */
+    section[data-testid="stSidebar"] {{
+        background-color: #070b12 !important;
+        border-right: 1px solid rgba(0, 240, 255, 0.15) !important;
+    }}
+
+    section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] {{
+        padding-top: 1rem !important;
+    }}
+
+    section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] a {{
+        border-radius: 6px !important;
+        margin: 2px 8px !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+    }}
+
+    section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] a:hover {{
+        background: rgba(0, 240, 255, 0.08) !important;
+        color: #00f0ff !important;
+    }}
+
+    section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] a[aria-current="page"] {{
+        background: rgba(0, 240, 255, 0.15) !important;
+        border-left: 3px solid #00f0ff !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }}
+
     /* =========================================================================
        DEVICE BREAKPOINT OPTIMIZATION (PC, LAPTOP, TABLET, MOBILE)
        ========================================================================= */
@@ -294,6 +322,7 @@ def inject_custom_css():
         .block-container {{
             max-width: 1560px !important;
             margin: 0 auto !important;
+            padding-top: max(1.25rem, env(safe-area-inset-top, 16px)) !important;
         }}
     }}
 
@@ -302,8 +331,13 @@ def inject_custom_css():
         .block-container {{
             max-width: 96% !important;
             padding: 1.25rem 1rem !important;
+            padding-top: max(1rem, env(safe-area-inset-top, 16px)) !important;
         }}
         /* Top Control Bar: adapt 4 columns into 2x2 grid */
+        div[data-testid="stHorizontalBlock"] {{
+            flex-wrap: wrap !important;
+            gap: 0.75rem 0 !important;
+        }}
         div[data-testid="column"] {{
             min-width: 48% !important;
             flex: 1 1 48% !important;
@@ -320,9 +354,14 @@ def inject_custom_css():
         }}
     }}
 
-    /* Mobile Phones (320px - 767px: iPhone SE, 13/14/15, Pixel, Galaxy) */
+    /* Mobile Phones (320px - 767px: iPhone SE, 13/14/15/16, Pixel, Galaxy) */
     @media (max-width: 767px) {{
         /* Full width stacking for columns */
+        div[data-testid="stHorizontalBlock"] {{
+            flex-wrap: wrap !important;
+            gap: 0.5rem 0 !important;
+        }}
+
         div[data-testid="column"] {{
             min-width: 100% !important;
             flex: 1 1 100% !important;
@@ -332,7 +371,7 @@ def inject_custom_css():
         .block-container {{
             padding-left: 0.65rem !important;
             padding-right: 0.65rem !important;
-            padding-top: 0.75rem !important;
+            padding-top: max(0.75rem, env(safe-area-inset-top, 12px)) !important;
             padding-bottom: calc(2rem + env(safe-area-inset-bottom, 16px)) !important;
         }}
 
@@ -388,10 +427,15 @@ def inject_custom_css():
             padding: 0.85rem 1rem !important;
         }}
 
-        /* 48px touch targets for mobile thumb navigation */
-        .stButton>button, .stTextInput input, .stSelectbox select {{
+        /* 48px touch targets & 16px font-size to prevent iOS WebKit auto-zoom */
+        .stButton>button {{
             min-height: 48px !important;
             font-size: 0.9rem !important;
+        }}
+
+        .stTextInput input, .stSelectbox select, .stTextArea textarea, .stNumberInput input {{
+            min-height: 48px !important;
+            font-size: 16px !important; /* Prevents intrusive iOS auto-zoom on mobile */
         }}
 
         .stCheckbox label, .stRadio label {{
@@ -415,7 +459,7 @@ def inject_custom_css():
     }}
 
     /* Plotly Touch Panning - prevents scroll freeze on mobile */
-    .js-plotly-plot, .plotly {{
+    .js-plotly-plot, .plotly, .nsewdrag, .draglayer, .cursor-crosshair, .xy {{
         touch-action: pan-y !important;
     }}
 
@@ -430,9 +474,17 @@ def inject_custom_css():
         }}
     }}
 
+    /* Window Controls Overlay for Desktop & Laptop PWAs */
+    @media (display-mode: window-controls-overlay) {{
+        .block-container {{
+            padding-top: max(2rem, env(titlebar-area-height, 36px)) !important;
+        }}
+    }}
+
     /* Flutter-grade Mobile Bottom Dock */
     .soc-mobile-dock {{
         display: none;
+    }}
     }}
 
     @media (max-width: 768px) {{
@@ -942,34 +994,31 @@ def render_pwa_install_banner():
 
 
 def render_mobile_bottom_nav(current_path: str = "/"):
-    """Render a native Flutter-grade bottom navigation dock for Mobile and Tablet devices."""
-    st.markdown(
-        """
-        <nav class="soc-mobile-dock" aria-label="Mobile Navigation Dock">
-            <a href="/" class="soc-dock-item" aria-label="Cockpit">
-                <span class="soc-dock-icon">⚡</span>
-                <span class="soc-dock-label">Cockpit</span>
-            </a>
-            <a href="/Incidents" class="soc-dock-item" aria-label="Incidents">
-                <span class="soc-dock-icon">📋</span>
-                <span class="soc-dock-label">Incidents</span>
-            </a>
-            <a href="/Response_Center" class="soc-dock-item" aria-label="Response">
-                <span class="soc-dock-icon">🛡️</span>
-                <span class="soc-dock-label">Response</span>
-            </a>
-            <a href="/Audit_Timeline" class="soc-dock-item" aria-label="Audit">
-                <span class="soc-dock-icon">📜</span>
-                <span class="soc-dock-label">Audit</span>
-            </a>
-            <a href="/Settings" class="soc-dock-item" aria-label="Settings">
-                <span class="soc-dock-icon">⚙️</span>
-                <span class="soc-dock-label">Settings</span>
-            </a>
-        </nav>
-        """,
-        unsafe_allow_html=True,
-    )
+    """Render a native Flutter-grade bottom navigation dock for Mobile and Tablet devices with active route highlighting."""
+    items = [
+        ("/", "Cockpit", "⚡"),
+        ("/Incidents", "Incidents", "📋"),
+        ("/Response_Center", "Response", "🛡️"),
+        ("/Audit_Timeline", "Audit", "📜"),
+        ("/Settings", "Settings", "⚙️"),
+    ]
+    norm_path = (current_path or "/").strip().lower()
+    links_html = []
+    for route, label, icon in items:
+        is_active = (route == "/" and norm_path in ("/", "/app", "")) or (route != "/" and norm_path.startswith(route.lower()))
+        active_cls = " active" if is_active else ""
+        links_html.append(
+            f'<a href="{route}" class="soc-dock-item{active_cls}" aria-label="{label}">'
+            f'<span class="soc-dock-icon">{icon}</span>'
+            f'<span class="soc-dock-label">{label}</span>'
+            f'</a>'
+        )
+    dock_html = f"""
+    <nav class="soc-mobile-dock" aria-label="Mobile Navigation Dock">
+        {''.join(links_html)}
+    </nav>
+    """
+    st.markdown(dock_html, unsafe_allow_html=True)
 
 
 def render_cookie_consent():
@@ -1045,7 +1094,7 @@ def render_cookie_consent():
                         st.rerun()
 
 
-def render_footer(key_suffix: str = ""):
+def render_footer(key_suffix: str = "", current_path: str = "/"):
     """Render standard footer with links, copyright, PWA status, and Cookie Settings trigger."""
     st.markdown(
         f"""
@@ -1062,7 +1111,7 @@ def render_footer(key_suffix: str = ""):
                 <a href="/Terms" class="soc-footer-link">Terms & Conditions</a>
             </div>
             <p style="font-size:0.75rem; color:#64748b; margin:0.3rem 0;">
-                <b>SentinelFlow AI</b> v1.2.0-pwa &bull; Autonomous Cybersecurity Incident Investigation & Safe Response Simulation.
+                <b>SentinelFlow AI</b> v1.4.0-pwa &bull; Autonomous Cybersecurity Incident Investigation & Safe Response Simulation.
             </p>
             <p style="font-size:0.7rem; color:#475569; margin:0.2rem 0;">
                 PWA Enabled &bull; Optimised for Mobile, Tablet, Laptop, and PC &bull; Air-Gapped Synthetic SOC Telemetry
@@ -1077,6 +1126,6 @@ def render_footer(key_suffix: str = ""):
         if st.button("🍪 Manage Cookie Preferences", key=btn_key, type="secondary"):
             st.session_state.show_cookie_settings = True
             st.rerun()
-    render_mobile_bottom_nav()
+    render_mobile_bottom_nav(current_path=current_path)
 
 

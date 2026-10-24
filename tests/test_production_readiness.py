@@ -179,14 +179,18 @@ def test_pwa_manifest_and_service_worker_configuration():
 
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest_data = json.load(f)
+        assert manifest_data["id"] == "/"
         assert manifest_data["display"] == "standalone"
         assert manifest_data["theme_color"] == "#00f0ff"
         assert len(manifest_data["icons"]) >= 2
+        assert len(manifest_data.get("screenshots", [])) >= 2
+        assert "display_override" in manifest_data
 
     with open(sw_path, "r", encoding="utf-8") as f:
         sw_content = f.read()
         assert "caches.open" in sw_content
         assert "offline.html" in sw_content
+        assert "Promise.allSettled" in sw_content
 
     with open(config_path, "r", encoding="utf-8") as f:
         config_content = f.read()
@@ -204,8 +208,14 @@ def test_cross_device_responsive_css_rules_present():
     assert "max-width: 767px" in css_source, "Mobile phone breakpoint required"
     assert "max-width: 375px" in css_source, "Small screen mobile breakpoint required"
     assert "safe-area-inset-bottom" in css_source, "Safe area insets required"
+    assert "safe-area-inset-top" in css_source, "Top safe area insets required"
     assert "min-height: 48px" in css_source, "Touch target sizing required"
+    assert "font-size: 16px" in css_source, "16px input font size to prevent iOS auto-zoom required"
     assert "prefers-reduced-motion" in css_source, "Accessibility reduced motion required"
     assert "soc-mobile-dock" in css_source, "Mobile bottom dock styling required"
+    assert "data-testid=\"stSidebar\"" in css_source, "Cyber sidebar styling required"
+    assert "data-testid=\"stHorizontalBlock\"" in css_source, "Horizontal block wrap styling required"
     assert "display-mode: standalone" in css_source, "Standalone PWA media query required"
+    assert "display-mode: window-controls-overlay" in css_source, "Window controls overlay media query required"
+
 

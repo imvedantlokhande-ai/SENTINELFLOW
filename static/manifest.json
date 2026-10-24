@@ -1,15 +1,26 @@
 {
+  "id": "/",
   "name": "SentinelFlow AI - Autonomous SOC Platform",
   "short_name": "SentinelFlow",
   "description": "Autonomous cybersecurity incident investigation and safe containment simulation platform with human-in-the-loop oversight.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
   "background_color": "#0a0e17",
   "theme_color": "#00f0ff",
   "lang": "en-US",
-  "categories": ["security", "productivity", "utilities"],
+  "categories": [
+    "security",
+    "productivity",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/app/static/icon-192.png",
@@ -42,6 +53,22 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/app/static/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SentinelFlow AI Autonomous SOC Cockpit on PC and Laptop"
+    },
+    {
+      "src": "/app/static/screenshot-narrow.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "SentinelFlow AI Mobile and Tablet Incident Response"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Incident Workspace",
@@ -59,6 +86,12 @@
       "name": "Response Center",
       "url": "/Response_Center",
       "description": "Analyst containment approval and verification gate",
+      "icons": [{ "src": "/app/static/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Audit Timeline",
+      "url": "/Audit_Timeline",
+      "description": "Immutable tamper-evident cryptographic audit chain",
       "icons": [{ "src": "/app/static/icon-192.png", "sizes": "192x192" }]
     }
   ]
