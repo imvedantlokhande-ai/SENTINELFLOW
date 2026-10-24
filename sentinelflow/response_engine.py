@@ -41,13 +41,20 @@ class ResponseEngine:
         if not target_id or not target_id.strip():
             raise ResponseExecutionError("Target identifier cannot be empty.")
 
+        target_clean = target_id.strip()
+        valid_targets = set(incident.correlated_entities) | {incident.primary_account, incident.incident_id}
+        if target_clean not in valid_targets:
+            raise ResponseExecutionError(
+                f"Security Validation Blocked: Target '{target_clean}' does not belong to incident '{incident.incident_id}'. Allowed targets: {sorted(list(valid_targets))}"
+            )
+
         action_id = f"ACT-{incident.incident_id}-{action_clean}"
         return ResponseActionRequest(
             action_id=action_id,
             incident_id=incident.incident_id,
             action_name=action_clean,
             target_type=target_type,
-            target_id=target_id.strip(),
+            target_id=target_clean,
             reasoning=reasoning,
             supporting_evidence_ids=supporting_evidence_ids,
             status="awaiting_approval",

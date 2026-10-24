@@ -49,7 +49,7 @@ def test_execution_without_approval_blocked():
         incident=inc,
         action_name="lock_account",
         target_type="account",
-        target_id="test-account",
+        target_id=inc.primary_account,
         reasoning="test",
         supporting_evidence_ids=["EVT-101"],
     )
@@ -68,7 +68,7 @@ def test_rejection_prevents_execution():
         incident=inc,
         action_name="lock_account",
         target_type="account",
-        target_id="test-account",
+        target_id=inc.primary_account,
         reasoning="test",
         supporting_evidence_ids=["EVT-101"],
     )
@@ -90,7 +90,7 @@ def test_duplicate_execution_blocked():
         incident=inc,
         action_name="revoke_session",
         target_type="session",
-        target_id="sess-1234",
+        target_id="sess-9011",
         reasoning="test",
         supporting_evidence_ids=["EVT-101"],
     )
@@ -100,7 +100,7 @@ def test_duplicate_execution_blocked():
     executed, demo_state = engine.execute_simulated_action(approved, demo_state)
 
     assert executed.status == "executed_simulation"
-    assert "sess-1234" in demo_state["synthetic_revoked_sessions"]
+    assert "sess-9011" in demo_state["synthetic_revoked_sessions"]
 
     # Attempting to execute the already executed action again
     with pytest.raises(ResponseExecutionError, match="must be in 'approved' status"):

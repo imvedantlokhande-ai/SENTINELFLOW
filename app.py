@@ -190,6 +190,7 @@ with nav_tabs[0]:
         st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
         st.markdown(f"<div style='font-size:0.85rem; font-weight:600; color:{COLOR_TEXT_SECONDARY};'>SEVERITY DISTRIBUTION</div>", unsafe_allow_html=True)
         st.plotly_chart(build_severity_donut_chart(metrics), use_container_width=True, config={"displayModeBar": False})
+        st.caption("ℹ️ Accessible Summary: Distribution shows 2 Critical, 2 High, 1 Medium, and 1 Low/Informational incident.")
 
         # Recent Activity Feed
         st.markdown(f"<div style='font-size:0.85rem; font-weight:600; color:{COLOR_TEXT_SECONDARY}; margin-bottom:0.4rem;'>RECENT SYNTHETIC ALERTS</div>", unsafe_allow_html=True)
@@ -246,6 +247,7 @@ with nav_tabs[0]:
             use_container_width=True,
             config={"displayModeBar": False},
         )
+        st.caption("ℹ️ Accessible Summary: Threat map visualizes 6 synthetic attack trajectories targeting primary SOC endpoints.")
 
         # Central Shield Element & Simulation Status Banner
         st.markdown(
@@ -347,6 +349,7 @@ with nav_tabs[0]:
 
         st.markdown(f"<div style='font-size:0.85rem; font-weight:600; color:{COLOR_TEXT_SECONDARY}; margin-bottom:0.3rem;'>TOP ATTACK VECTORS</div>", unsafe_allow_html=True)
         st.plotly_chart(build_attack_vectors_bar_chart(st.session_state.attack_vectors), use_container_width=True, config={"displayModeBar": False})
+        st.caption("ℹ️ Accessible Summary: Top vectors are Credential Stuffing (42), Anomalous Admin (28), Exfiltration (19), Service Misuse (15), and Bulk Exports (11).")
 
         # Illustrative Compliance Framework
         st.markdown(
@@ -502,6 +505,7 @@ with nav_tabs[0]:
                 use_container_width=True,
                 config={"displayModeBar": False},
             )
+            st.caption(f"ℹ️ Accessible Summary: Relationship network connects {current_inc.primary_account} to {len(current_events)} correlated events and {len(current_inc.correlated_entities)} entities.")
 
             # Findings & Explanations Panel
             st.markdown(
