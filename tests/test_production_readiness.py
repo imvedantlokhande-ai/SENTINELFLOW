@@ -143,11 +143,15 @@ def test_production_deployment_configs_contain_hsts_and_security_headers():
         assert "Strict-Transport-Security" in caddy_content
         assert "X-Content-Type-Options" in caddy_content
         assert "X-Frame-Options" in caddy_content
+        assert "robots.txt" in caddy_content
+        assert "sitemap.xml" in caddy_content
 
     with open(nginx_path, "r", encoding="utf-8") as f:
         nginx_content = f.read()
         assert "Strict-Transport-Security" in nginx_content
         assert "proxy_pass http://127.0.0.1:8501" in nginx_content
+        assert "robots.txt" in nginx_content
+        assert "sitemap.xml" in nginx_content
 
 
 def test_pwa_manifest_and_service_worker_configuration():
@@ -160,6 +164,8 @@ def test_pwa_manifest_and_service_worker_configuration():
     sw_path = os.path.join(static_dir, "service-worker.js")
     icon192_path = os.path.join(static_dir, "icon-192.svg")
     icon512_path = os.path.join(static_dir, "icon-512.svg")
+    icon192_png = os.path.join(static_dir, "icon-192.png")
+    icon512_png = os.path.join(static_dir, "icon-512.png")
     offline_path = os.path.join(static_dir, "offline.html")
     config_path = os.path.join(base_dir, ".streamlit", "config.toml")
 
@@ -167,6 +173,8 @@ def test_pwa_manifest_and_service_worker_configuration():
     assert os.path.exists(sw_path), "service-worker.js must exist"
     assert os.path.exists(icon192_path), "icon-192.svg must exist"
     assert os.path.exists(icon512_path), "icon-512.svg must exist"
+    assert os.path.exists(icon192_png), "icon-192.png must exist"
+    assert os.path.exists(icon512_png), "icon-512.png must exist"
     assert os.path.exists(offline_path), "offline.html must exist"
 
     with open(manifest_path, "r", encoding="utf-8") as f:
@@ -198,4 +206,6 @@ def test_cross_device_responsive_css_rules_present():
     assert "safe-area-inset-bottom" in css_source, "Safe area insets required"
     assert "min-height: 48px" in css_source, "Touch target sizing required"
     assert "prefers-reduced-motion" in css_source, "Accessibility reduced motion required"
+    assert "soc-mobile-dock" in css_source, "Mobile bottom dock styling required"
+    assert "display-mode: standalone" in css_source, "Standalone PWA media query required"
 

@@ -30,6 +30,18 @@ sentinelflow.ai, www.sentinelflow.ai {
         reverse_proxy localhost:8501
     }
 
+    handle /robots.txt {
+        rewrite * /app/static/robots.txt
+        header +Content-Type "text/plain"
+        reverse_proxy localhost:8501
+    }
+
+    handle /sitemap.xml {
+        rewrite * /app/static/sitemap.xml
+        header +Content-Type "application/xml"
+        reverse_proxy localhost:8501
+    }
+
     # Proxy all other routes to Streamlit
     handle {
         reverse_proxy localhost:8501 {
