@@ -333,4 +333,4 @@ SentinelFlow AI is a prototype for demonstrating AI-assisted security investigat
 
 ---
 
-Built to demonstrate that effective AI systems need more than intelligence: they need security, reliability, accountability, and verifiable outcomes.# SENTINELFLOW
+Built to demonstrate that effective AI systems need more than intelligence: they need security, reliability, accountability, and verifiable outcomes.
