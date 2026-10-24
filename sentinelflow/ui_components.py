@@ -393,6 +393,99 @@ def inject_custom_css():
             min-height: 48px !important;
             font-size: 0.9rem !important;
         }}
+
+        .stCheckbox label, .stRadio label {{
+            min-height: 44px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            cursor: pointer !important;
+        }}
+
+        /* Streamlit expander padding optimization on mobile */
+        .streamlit-expanderContent {{
+            padding: 0.65rem !important;
+        }}
+    }}
+
+    /* Table Horizontal Overflow Wrapping */
+    div[data-testid="stTable"], div[data-testid="stDataFrame"], .soc-table-wrapper {{
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        max-width: 100% !important;
+    }}
+
+    /* Plotly Touch Panning - prevents scroll freeze on mobile */
+    .js-plotly-plot, .plotly {{
+        touch-action: pan-y !important;
+    }}
+
+    /* Standalone PWA Optimization */
+    @media (display-mode: standalone) {{
+        .block-container {{
+            padding-top: max(1rem, env(safe-area-inset-top, 16px)) !important;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom, 24px)) !important;
+        }}
+        .soc-pwa-card {{
+            display: none !important;
+        }}
+    }}
+
+    /* Flutter-grade Mobile Bottom Dock */
+    .soc-mobile-dock {{
+        display: none;
+    }}
+
+    @media (max-width: 768px) {{
+        .soc-mobile-dock {{
+            display: flex !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+            background: rgba(10, 14, 23, 0.95) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-top: 1px solid rgba(0, 240, 255, 0.25) !important;
+            z-index: 999999 !important;
+            justify-content: space-around !important;
+            align-items: center !important;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6) !important;
+        }}
+
+        .soc-dock-item {{
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-decoration: none !important;
+            color: #94a3b8 !important;
+            min-width: 52px !important;
+            min-height: 48px !important;
+            transition: color 0.15s ease, transform 0.1s ease !important;
+        }}
+
+        .soc-dock-item:active {{
+            transform: scale(0.92) !important;
+            color: #00f0ff !important;
+        }}
+
+        .soc-dock-icon {{
+            font-size: 1.2rem !important;
+            line-height: 1 !important;
+        }}
+
+        .soc-dock-label {{
+            font-size: 0.65rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.03em !important;
+            margin-top: 2px !important;
+        }}
+
+        .block-container {{
+            padding-bottom: calc(70px + env(safe-area-inset-bottom, 20px)) !important;
+        }}
     }}
 
     /* Smallest Mobile Displays (320px - 375px) */
@@ -736,6 +829,9 @@ def render_seo_meta(
     """Inject semantic SEO metadata, canonical URL, Open Graph, Twitter card, and PWA manifest/service worker tags."""
     canonical_url = f"https://sentinelflow.ai{path}"
     meta_html = f"""
+    <!-- Mobile Viewport & PWA Display Optimization -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+
     <!-- SEO & Social Sharing Meta Tags -->
     <meta name="description" content="{description}">
     <link rel="canonical" href="{canonical_url}">
@@ -757,7 +853,9 @@ def render_seo_meta(
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SentinelFlow">
-    <link rel="apple-touch-icon" href="/app/static/icon-192.svg">
+    <link rel="apple-touch-icon" sizes="192x192" href="/app/static/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/app/static/icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/app/static/icon-192.png">
     <link rel="icon" type="image/svg+xml" href="/app/static/favicon.svg">
 
     <!-- Service Worker Registration for Offline & PWA Execution -->
@@ -767,12 +865,18 @@ def render_seo_meta(
       }}
       if ('serviceWorker' in navigator) {{
         window.addEventListener('load', function() {{
-          navigator.serviceWorker.register('/app/static/service-worker.js', {{ scope: '/' }})
+          navigator.serviceWorker.register('/service-worker.js', {{ scope: '/' }})
             .then(function(reg) {{
-              console.log('[PWA] ServiceWorker registered successfully with scope:', reg.scope);
+              console.log('[PWA] ServiceWorker registered with root scope:', reg.scope);
             }})
             .catch(function(err) {{
-              console.log('[PWA] ServiceWorker info:', err);
+              navigator.serviceWorker.register('/app/static/service-worker.js')
+                .then(function(fbReg) {{
+                  console.log('[PWA] ServiceWorker registered with fallback scope:', fbReg.scope);
+                }})
+                .catch(function(fbErr) {{
+                  console.log('[PWA] ServiceWorker info:', fbErr);
+                }});
             }});
         }});
       }}
@@ -788,22 +892,81 @@ def render_pwa_install_banner():
 
     st.markdown(
         """
-        <div class="soc-pwa-card">
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-                <span style="font-size:1.4rem;">📲</span>
-                <div>
-                    <div style="font-size:0.85rem; font-weight:700; color:#00f0ff;">
-                        INSTALL SENTINELFLOW PWA
-                    </div>
-                    <div style="font-size:0.75rem; color:#94a3b8;">
-                        Install as a standalone app on PC, Mac, Tablet, or Mobile for offline caching and zero-latency windowed SOC monitoring.
+        <div class="soc-pwa-card" id="sentinelflow-pwa-banner">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <span style="font-size:1.6rem;">📲</span>
+                    <div>
+                        <div style="font-size:0.85rem; font-weight:700; color:#00f0ff; letter-spacing:0.04em;">
+                            INSTALL SENTINELFLOW STANDALONE PWA
+                        </div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">
+                            Optimized for PC, Laptop, iPad/Tablet & Mobile. Zero-latency windowed SOC monitoring with offline caching.
+                        </div>
                     </div>
                 </div>
+                <button id="pwa-install-btn" style="background:#00f0ff; color:#0a0e17; font-weight:700; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:0.4rem; transition: background 0.15s ease;">
+                    <span>⊕</span> Install Application
+                </button>
             </div>
-            <div style="font-size:0.75rem; color:#64748b; font-family:'JetBrains Mono',monospace;">
-                Chrome / Edge: Click (⊕ Install) in URL bar &bull; Safari / iOS: Tap Share → 'Add to Home Screen'
+            <div style="font-size:0.72rem; color:#64748b; font-family:'JetBrains Mono',monospace; margin-top:0.4rem;">
+                Desktop / PC: Click (⊕ Install) in URL bar &bull; iOS / Safari: Tap Share → 'Add to Home Screen'
             </div>
         </div>
+        <script>
+          let deferredPrompt;
+          const pwaBtn = document.getElementById('pwa-install-btn');
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (pwaBtn) {
+              pwaBtn.style.display = 'inline-flex';
+            }
+          });
+          if (pwaBtn) {
+            pwaBtn.addEventListener('click', async () => {
+              if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('[PWA] User response to install:', outcome);
+                deferredPrompt = null;
+              } else {
+                alert("To install SentinelFlow AI:\\n- On Chrome/Edge (PC/Laptop): Click the install icon (⊕) in the URL bar.\\n- On iPhone/iPad (Safari): Tap Share, then 'Add to Home Screen'.\\n- On Android: Tap Menu (⋮), then 'Install app'.");
+              }
+            });
+          }
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_mobile_bottom_nav(current_path: str = "/"):
+    """Render a native Flutter-grade bottom navigation dock for Mobile and Tablet devices."""
+    st.markdown(
+        """
+        <nav class="soc-mobile-dock" aria-label="Mobile Navigation Dock">
+            <a href="/" class="soc-dock-item" aria-label="Cockpit">
+                <span class="soc-dock-icon">⚡</span>
+                <span class="soc-dock-label">Cockpit</span>
+            </a>
+            <a href="/Incidents" class="soc-dock-item" aria-label="Incidents">
+                <span class="soc-dock-icon">📋</span>
+                <span class="soc-dock-label">Incidents</span>
+            </a>
+            <a href="/Response_Center" class="soc-dock-item" aria-label="Response">
+                <span class="soc-dock-icon">🛡️</span>
+                <span class="soc-dock-label">Response</span>
+            </a>
+            <a href="/Audit_Timeline" class="soc-dock-item" aria-label="Audit">
+                <span class="soc-dock-icon">📜</span>
+                <span class="soc-dock-label">Audit</span>
+            </a>
+            <a href="/Settings" class="soc-dock-item" aria-label="Settings">
+                <span class="soc-dock-icon">⚙️</span>
+                <span class="soc-dock-label">Settings</span>
+            </a>
+        </nav>
         """,
         unsafe_allow_html=True,
     )
@@ -914,5 +1077,6 @@ def render_footer(key_suffix: str = ""):
         if st.button("🍪 Manage Cookie Preferences", key=btn_key, type="secondary"):
             st.session_state.show_cookie_settings = True
             st.rerun()
+    render_mobile_bottom_nav()
 
 

@@ -12,6 +12,18 @@
   "categories": ["security", "productivity", "utilities"],
   "icons": [
     {
+      "src": "/app/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/app/static/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
@@ -35,19 +47,19 @@
       "name": "Incident Workspace",
       "url": "/Incidents",
       "description": "Inspect correlated security incidents and entity graphs",
-      "icons": [{ "src": "/app/static/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/app/static/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Threat Map",
       "url": "/Threat_Intelligence",
       "description": "Global adversary coordinates and attack vectors",
-      "icons": [{ "src": "/app/static/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/app/static/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Response Center",
       "url": "/Response_Center",
       "description": "Analyst containment approval and verification gate",
-      "icons": [{ "src": "/app/static/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/app/static/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
