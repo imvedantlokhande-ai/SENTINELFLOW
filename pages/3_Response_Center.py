@@ -90,41 +90,93 @@ with tab_pending:
             b_col1, b_col2, _ = st.columns([2, 2, 4])
             with b_col1:
                 if st.button(f"✅ Authorize & Simulate", key=f"rc_app_{inc.incident_id}", type="primary"):
-                    approved_req = response_engine.approve_action(prop, analyst_id="soc_analyst_01")
-                    executed_req, raw_state = response_engine.execute_simulated_action(approved_req, get_raw_state_dict(st))
-                    verif = verification_engine.verify_action_state(executed_req, raw_state)
-                    executed_req.status = "verified" if verif.passed else "failed_verification"
-                    inc.proposed_action = executed_req
-                    inc.verification_result = verif
+                    from sentinelflow.authorization import AuthorizationError
+                    from sentinelflow.rate_limiter import evaluate_rate_limit
+                    
+                    user = st.session_state.current_user
+                    allowed, remaining, retry_after = evaluate_rate_limit("execute_simulation", user_id=user.uid)
+                    if not allowed:
+                        st.error(f"⏳ Cooldown Active: Response action rate limit reached. Please wait {retry_after}s.")
+                        st.session_state.audit_trail.log(
+                            event_type="RATE_LIMIT_TRIGGERED",
+                            status="BLOCKED",
+                            incident_id=inc.incident_id,
+                            details=f"Rate limit triggered on execute_simulation by {user.email}.",
+                        )
+                    else:
+                        try:
+                            approved_req = response_engine.approve_action(
+                                prop,
+                                analyst_id=user.email,
+                                session=user,
+                                incident=inc,
+                            )
+                            executed_req, raw_state = response_engine.execute_simulated_action(
+                                approved_req,
+                                get_raw_state_dict(st),
+                                session=user,
+                                incident=inc,
+                            )
+                            verif = verification_engine.verify_action_state(executed_req, raw_state)
+                            executed_req.status = "verified" if verif.passed else "failed_verification"
+                            inc.proposed_action = executed_req
+                            inc.verification_result = verif
 
-                    st.session_state.audit_trail.log(
-                        event_type="ACTION_APPROVED",
-                        status="SUCCESS",
-                        incident_id=inc.incident_id,
-                        action_id=prop.action_id,
-                        details=f"Analyst authorized {prop.action_name} on {prop.target_id}.",
-                    )
-                    st.session_state.audit_trail.log(
-                        event_type="VERIFICATION_PASSED" if verif.passed else "VERIFICATION_FAILED",
-                        status="PASSED" if verif.passed else "FAILED",
-                        incident_id=inc.incident_id,
-                        action_id=prop.action_id,
-                        details=verif.details,
-                    )
-                    st.rerun()
+                            st.session_state.audit_trail.log(
+                                event_type="ACTION_APPROVED",
+                                status="SUCCESS",
+                                incident_id=inc.incident_id,
+                                action_id=prop.action_id,
+                                actor=user.email,
+                                details=f"User {user.email} [{user.role}] authorized {prop.action_name} on {prop.target_id}.",
+                            )
+                            st.session_state.audit_trail.log(
+                                event_type="VERIFICATION_PASSED" if verif.passed else "VERIFICATION_FAILED",
+                                status="PASSED" if verif.passed else "FAILED",
+                                incident_id=inc.incident_id,
+                                action_id=prop.action_id,
+                                details=verif.details,
+                            )
+                            st.rerun()
+                        except AuthorizationError as auth_err:
+                            st.error(f"⛔ Authorization Denied: {auth_err}")
+                            st.session_state.audit_trail.log(
+                                event_type="AUTHORIZATION_FAILURE",
+                                status="DENIED",
+                                incident_id=inc.incident_id,
+                                actor=user.email,
+                                details=str(auth_err),
+                            )
 
             with b_col2:
                 if st.button(f"❌ Reject Action", key=f"rc_rej_{inc.incident_id}"):
-                    rejected_req = response_engine.reject_action(prop, analyst_id="soc_analyst_01")
-                    inc.proposed_action = rejected_req
-                    st.session_state.audit_trail.log(
-                        event_type="ACTION_REJECTED",
-                        status="REJECTED",
-                        incident_id=inc.incident_id,
-                        action_id=prop.action_id,
-                        details=f"Analyst rejected {prop.action_name}.",
-                    )
-                    st.rerun()
+                    from sentinelflow.authorization import AuthorizationError
+                    user = st.session_state.current_user
+                    try:
+                        rejected_req = response_engine.reject_action(
+                            prop,
+                            analyst_id=user.email,
+                            session=user,
+                        )
+                        inc.proposed_action = rejected_req
+                        st.session_state.audit_trail.log(
+                            event_type="ACTION_REJECTED",
+                            status="REJECTED",
+                            incident_id=inc.incident_id,
+                            action_id=prop.action_id,
+                            actor=user.email,
+                            details=f"User {user.email} rejected {prop.action_name}.",
+                        )
+                        st.rerun()
+                    except AuthorizationError as auth_err:
+                        st.error(f"⛔ Authorization Denied: {auth_err}")
+                        st.session_state.audit_trail.log(
+                            event_type="AUTHORIZATION_FAILURE",
+                            status="DENIED",
+                            incident_id=inc.incident_id,
+                            actor=user.email,
+                            details=str(auth_err),
+                        )
 
 with tab_history:
     completed = [i for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status not in ("proposed", "awaiting_approval")]

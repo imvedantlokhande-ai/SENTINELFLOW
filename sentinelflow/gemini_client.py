@@ -10,6 +10,12 @@ from typing import List, Optional, Dict, Any
 
 from sentinelflow.config import GEMINI_API_KEY, DEFAULT_GEMINI_MODEL, ALLOWED_ACTIONS, VALID_SEVERITIES
 from sentinelflow.models import SecurityEvent, CorrelatedGroup, InvestigationFinding
+from sentinelflow.prompt_defense import (
+    build_hardened_system_instruction,
+    sanitize_untrusted_telemetry,
+    detect_prompt_injection,
+    validate_and_bound_ai_finding,
+)
 
 logger = logging.getLogger("sentinelflow.gemini_client")
 
@@ -49,10 +55,17 @@ class GeminiInvestigationClient:
                 f"The official 'google-genai' SDK is not installed in the environment: {e}"
             )
 
-        # Context compilation - only send bounded synthetic incident context
+        # Context compilation - sanitize untrusted telemetry and bound input size
         valid_event_ids = set(e.event_id for e in events)
-        telemetry_summary = [
-            {
+        injections_detected = []
+        telemetry_summary = []
+        for e in events:
+            is_injected, matched_patterns = detect_prompt_injection(e.description)
+            if is_injected:
+                injections_detected.extend(matched_patterns)
+            
+            clean_desc = sanitize_untrusted_telemetry(e.description)
+            telemetry_summary.append({
                 "event_id": e.event_id,
                 "timestamp": e.timestamp,
                 "category": e.event_category,
@@ -60,19 +73,11 @@ class GeminiInvestigationClient:
                 "source_ip": e.synthetic_source_ip,
                 "location": e.fictional_location,
                 "severity": e.severity,
-                "description": e.description,
+                "description": clean_desc,
                 "evidence_metadata": e.evidence_metadata,
-            }
-            for e in events
-        ]
+            })
 
-        system_instruction = (
-            "You are SentinelFlow AI, an expert Tier-3 cybersecurity incident response assistant. "
-            "You analyze security events under HUMAN-IN-THE-LOOP supervision. "
-            "All telemetry is STRICTLY SYNTHETIC AND FICTIONAL. "
-            "You MUST respond ONLY with a single valid JSON object adhering exactly to the requested schema. "
-            "Do not output markdown code blocks or preamble."
-        )
+        system_instruction = build_hardened_system_instruction()
 
         prompt = f"""
 Analyze the following synthetic security incident telemetry:
@@ -150,7 +155,8 @@ Produce a structured JSON investigation report with these EXACT fields:
 
         # Validate strictly with Pydantic
         try:
-            finding = InvestigationFinding(**parsed_data)
-            return finding
+            raw_finding = InvestigationFinding(**parsed_data)
+            return validate_and_bound_ai_finding(raw_finding, valid_event_ids)
         except Exception as pydantic_err:
             raise GeminiProviderError(f"Gemini output failed Pydantic schema validation: {pydantic_err}")
+

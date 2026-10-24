@@ -6,9 +6,18 @@ NEVER touches real systems or runs arbitrary system commands.
 """
 
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from sentinelflow.config import ALLOWED_ACTIONS, ACTION_LABELS
 from sentinelflow.models import ResponseActionRequest, Incident
+from sentinelflow.auth import UserSession
+from sentinelflow.authorization import (
+    enforce_permission,
+    PERM_APPROVE_RESPONSE_TIER1,
+    PERM_APPROVE_RESPONSE_TIER2,
+    PERM_EXECUTE_SIMULATION,
+    PERM_PROPOSE_RESPONSE,
+    AuthorizationError,
+)
 
 
 class ResponseExecutionError(Exception):
@@ -65,8 +74,20 @@ class ResponseEngine:
         self,
         action_request: ResponseActionRequest,
         analyst_id: str = "soc_analyst_01",
+        session: Optional[UserSession] = None,
+        incident: Optional[Incident] = None,
     ) -> ResponseActionRequest:
-        """Mark an action as explicitly approved by a human analyst."""
+        """Mark an action as explicitly approved by an authorized human analyst."""
+        if session is not None:
+            enforce_permission(
+                session=session,
+                permission=PERM_APPROVE_RESPONSE_TIER1,
+                incident=incident,
+                target_id=action_request.target_id,
+                action_request=action_request,
+            )
+            analyst_id = session.email
+
         if action_request.status not in ("proposed", "awaiting_approval"):
             raise ResponseExecutionError(
                 f"Cannot approve action in status '{action_request.status}'."
@@ -83,8 +104,17 @@ class ResponseEngine:
         action_request: ResponseActionRequest,
         analyst_id: str = "soc_analyst_01",
         rejection_reason: str = "Analyst rejected proposed containment.",
+        session: Optional[UserSession] = None,
     ) -> ResponseActionRequest:
         """Mark an action as rejected by the analyst, preventing execution."""
+        if session is not None:
+            enforce_permission(
+                session=session,
+                permission=PERM_PROPOSE_RESPONSE,
+                action_request=action_request,
+            )
+            analyst_id = session.email
+
         if action_request.status not in ("proposed", "awaiting_approval"):
             raise ResponseExecutionError(
                 f"Cannot reject action in status '{action_request.status}'."
@@ -100,25 +130,38 @@ class ResponseEngine:
         self,
         action_request: ResponseActionRequest,
         demo_state: Dict[str, Any],
+        session: Optional[UserSession] = None,
+        incident: Optional[Incident] = None,
     ) -> Tuple[ResponseActionRequest, Dict[str, Any]]:
         """Execute approved simulated containment against synthetic demo state only.
 
-        Raises ResponseExecutionError if:
+        Raises ResponseExecutionError or AuthorizationError if:
+        - User lacks execution permission
         - Action is not approved
         - Action is already executed (duplicate execution prevention)
         - Action is not in allowlist
         - Target is invalid
         """
-        # 1. Require approval
+        # 0. Check server-side authorization if session provided
+        if session is not None:
+            enforce_permission(
+                session=session,
+                permission=PERM_EXECUTE_SIMULATION,
+                incident=incident,
+                target_id=action_request.target_id,
+                action_request=action_request,
+            )
+
+        # 1. Reject duplicate execution
+        if action_request.executed_at is not None or action_request.status in ("executed_simulation", "verified"):
+            raise ResponseExecutionError(
+                f"Duplicate execution blocked: Action {action_request.action_id} was already executed at {action_request.executed_at}."
+            )
+
+        # 2. Require approval
         if action_request.status != "approved":
             raise ResponseExecutionError(
                 f"Action execution blocked: Action must be in 'approved' status, but is '{action_request.status}'."
-            )
-
-        # 2. Reject duplicate execution
-        if action_request.executed_at is not None:
-            raise ResponseExecutionError(
-                f"Duplicate execution blocked: Action {action_request.action_id} was already executed at {action_request.executed_at}."
             )
 
         # 3. Validate action name in allowlist

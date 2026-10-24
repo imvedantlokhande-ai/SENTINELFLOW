@@ -37,6 +37,9 @@ htmlcov/
 *.pem
 *.key
 credentials.json
+*service_account*.json
+*serviceaccount*.json
+firebase-adminsdk*.json
 
 # IDE
 .vscode/

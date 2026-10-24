@@ -20,6 +20,7 @@ from sentinelflow.state import (
 from sentinelflow.ui_components import (
     inject_custom_css,
     render_header,
+    render_auth_modal,
     render_simulation_banner,
     render_severity_badge,
     render_status_badge,
@@ -52,6 +53,7 @@ verification_engine = VerificationEngine()
 
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override, gemini_ready=investigation_engine.gemini_client.is_configured())
+render_auth_modal()
 render_simulation_banner()
 render_cookie_consent()
 

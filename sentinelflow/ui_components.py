@@ -481,8 +481,9 @@ def render_header(
     pending_approvals: int = 0,
     active_mode: str = "AUTO",
     gemini_ready: bool = False,
+    user_session: Optional[Any] = None,
 ):
-    """Render the top SOC navigation brand header."""
+    """Render the top SOC navigation brand header with role and authentication badges."""
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     mode_text = (
         "GEMINI AI ACTIVE"
@@ -499,6 +500,20 @@ def render_header(
         </span>
         """
 
+    # Active User & Role badge
+    user = user_session or st.session_state.get("current_user")
+    if user:
+        role_upper = getattr(user, "role", "viewer").upper()
+        role_icon = "👑" if role_upper == "ADMINISTRATOR" else ("🛡️" if role_upper == "ANALYST" else "👁️")
+        role_badge_class = "badge-critical" if role_upper == "ADMINISTRATOR" else ("badge-demo" if role_upper == "ANALYST" else "badge-info")
+        auth_html = f"""
+        <span class="badge {role_badge_class}" title="Authenticated Session: {getattr(user, 'email', '')}">
+            {role_icon} {role_upper}: {getattr(user, 'email', '').split('@')[0]}
+        </span>
+        """
+    else:
+        auth_html = """<span class="badge badge-info">👤 GUEST</span>"""
+
     header_html = f"""
     <div class="soc-header">
         <div class="soc-brand">
@@ -511,12 +526,142 @@ def render_header(
         <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
             <span class="badge badge-demo">🔴 SYNTHETIC DEMO ENVIRONMENT</span>
             <span class="badge {mode_class}">⚡ {mode_text}</span>
+            {auth_html}
             {pending_html}
             <span class="badge badge-info" style="font-family:'JetBrains Mono',monospace;">🕒 {now_str}</span>
         </div>
     </div>
     """
     st.markdown(header_html, unsafe_allow_html=True)
+
+
+def render_auth_modal():
+    """Render the Firebase & Role-Based Authentication panel."""
+    current_user = st.session_state.get("current_user")
+    if not current_user:
+        return
+
+    role_str = getattr(current_user, "role", "viewer").upper()
+    email_str = getattr(current_user, "email", "user@sentinelflow.ai")
+    remaining_sec = current_user.get_remaining_seconds() if hasattr(current_user, "get_remaining_seconds") else 3600
+
+    with st.expander(f"🔐 Identity, Firebase Auth & RBAC Settings [{role_str} &bull; {email_str}]", expanded=st.session_state.get("show_auth_modal", False)):
+        st.markdown(
+            f"""
+            <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.75rem;">
+                <b>Authenticated Session:</b> <code>{getattr(current_user, 'uid', '')}</code> &bull; 
+                <b>Provider:</b> {getattr(current_user, 'auth_provider', 'demo_auth')} &bull; 
+                <b>Session Expiry:</b> {remaining_sec}s remaining
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        tab1, tab2, tab3 = st.tabs(["⚡ Fast Role Switcher (Demo)", "🔥 Firebase ID Token Verification", "🔑 Email & Password Login"])
+
+        with tab1:
+            st.markdown("<p style='font-size:0.85rem; color:#f8fafc;'>Switch active persona to test server-side Role-Based Access Control (RBAC):</p>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("👑 Switch to Administrator", key="auth_switch_admin", use_container_width=True):
+                    from sentinelflow.auth import get_default_demo_session
+                    st.session_state.current_user = get_default_demo_session("administrator")
+                    st.session_state.audit_trail.log(
+                        event_type="AUTH_ROLE_SWITCHED",
+                        status="SUCCESS",
+                        actor="admin@sentinelflow.ai",
+                        details="Switched active session to Administrator role.",
+                    )
+                    st.success("Active Session: Administrator (Full Privileges)")
+                    st.rerun()
+            with col2:
+                if st.button("🛡️ Switch to Analyst", key="auth_switch_analyst", use_container_width=True):
+                    from sentinelflow.auth import get_default_demo_session
+                    st.session_state.current_user = get_default_demo_session("analyst")
+                    st.session_state.audit_trail.log(
+                        event_type="AUTH_ROLE_SWITCHED",
+                        status="SUCCESS",
+                        actor="analyst@sentinelflow.ai",
+                        details="Switched active session to Analyst role.",
+                    )
+                    st.success("Active Session: Senior Analyst (Triage & Tier-1 Containment)")
+                    st.rerun()
+            with col3:
+                if st.button("👁️ Switch to Viewer (Read-Only)", key="auth_switch_viewer", use_container_width=True):
+                    from sentinelflow.auth import get_default_demo_session
+                    st.session_state.current_user = get_default_demo_session("viewer")
+                    st.session_state.audit_trail.log(
+                        event_type="AUTH_ROLE_SWITCHED",
+                        status="SUCCESS",
+                        actor="viewer@sentinelflow.ai",
+                        details="Switched active session to Viewer role.",
+                    )
+                    st.success("Active Session: Viewer (Read-Only Mode)")
+                    st.rerun()
+
+        with tab2:
+            st.markdown("<p style='font-size:0.85rem; color:#f8fafc;'>Verify an authentic Firebase ID Token on the trusted server side:</p>", unsafe_allow_html=True)
+            token_input = st.text_area("Paste Firebase JWT ID Token", key="auth_jwt_input", height=80, help="Signed JWT issued by Firebase Authentication.")
+            if st.button("Verify Token with Google Auth Infrastructure", key="auth_verify_jwt_btn"):
+                if not token_input.strip():
+                    st.error("Please enter a token.")
+                else:
+                    try:
+                        from sentinelflow.auth import authenticate_user
+                        session = authenticate_user(email="firebase_user@sentinelflow.ai", id_token=token_input.strip())
+                        st.session_state.current_user = session
+                        st.session_state.audit_trail.log(
+                            event_type="AUTH_FIREBASE_SUCCESS",
+                            status="SUCCESS",
+                            actor=session.email,
+                            details=f"Firebase ID token verified for UID {session.uid}",
+                        )
+                        st.success(f"Firebase Token Verified! Logged in as {session.email} [{session.role}]")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Token Verification Rejected: {e}")
+                        st.session_state.audit_trail.log(
+                            event_type="AUTH_FIREBASE_FAILED",
+                            status="FAILURE",
+                            actor="unauthenticated",
+                            details="Firebase ID token verification failed.",
+                        )
+
+        with tab3:
+            st.markdown("<p style='font-size:0.85rem; color:#f8fafc;'>Sign in with Email and Password:</p>", unsafe_allow_html=True)
+            col_e1, col_e2 = st.columns(2)
+            with col_e1:
+                login_email = st.text_input("Email Address", value="analyst@sentinelflow.ai", key="auth_email_input")
+            with col_e2:
+                login_pwd = st.text_input("Password", type="password", value="AnalystPass@2026!", key="auth_pwd_input")
+
+            if st.button("Sign In Securely", key="auth_submit_login_btn", type="primary"):
+                try:
+                    from sentinelflow.auth import authenticate_user
+                    from sentinelflow.rate_limiter import evaluate_rate_limit
+                    allowed, remaining, retry_after = evaluate_rate_limit("login", client_ip="127.0.0.1")
+                    if not allowed:
+                        st.error(f"Rate limit exceeded: Too many login attempts. Cooldown active for {retry_after}s.")
+                    else:
+                        session = authenticate_user(email=login_email, password=login_pwd)
+                        st.session_state.current_user = session
+                        st.session_state.audit_trail.log(
+                            event_type="AUTH_LOGIN_SUCCESS",
+                            status="SUCCESS",
+                            actor=session.email,
+                            details=f"User {session.email} authenticated successfully.",
+                        )
+                        st.success(f"Authenticated as {session.email} [{session.role.upper()}]")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Authentication Failed: {e}")
+                    st.session_state.audit_trail.log(
+                        event_type="AUTH_LOGIN_FAILED",
+                        status="FAILURE",
+                        actor=login_email,
+                        details="Authentication failed with invalid credentials.",
+                    )
+
 
 
 def render_simulation_banner():

@@ -1,0 +1,102 @@
+rules_version = '2';
+
+// SentinelFlow AI - Hardened Production Cloud Firestore Security Rules
+// Enforces:
+// 1. Mandatory authentication for all operations (request.auth != null)
+// 2. Strict user ownership on user profiles
+// 3. Immutability of privileged fields (role, ownership, uid)
+// 4. Role-based access control (analyst and admin roles for incidents and responses)
+// 5. Append-only audit logs (no updates or deletes permitted)
+// 6. Default denial for all unrecognized collections
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+
+    function isAnalyst() {
+      return isAuthenticated() && (getUserRole() == 'analyst' || getUserRole() == 'administrator');
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'administrator';
+    }
+
+    // User Profile Documents
+    match /users/{userId} {
+      // Users can only read their own profile; admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own profile, but cannot assign themselves admin role
+      allow create: if isOwner(userId) 
+                    && (!('role' in request.resource.data) || request.resource.data.role == 'viewer');
+      
+      // Role elevation can only be executed by verified administrators
+      allow update: if isOwner(userId)
+                    && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+                    || isAdmin();
+
+      // Deletion restricted to administrators
+      allow delete: if isAdmin();
+    }
+
+    // Security Incidents
+    match /incidents/{incidentId} {
+      // All authenticated users can view synthetic incidents
+      allow read: if isAuthenticated();
+
+      // Only analysts and administrators can update incident status or add findings
+      allow update: if isAnalyst()
+                    && request.resource.data.incident_id == resource.data.incident_id
+                    && request.resource.data.is_synthetic == true;
+
+      // Incident creation restricted to analysts & admins
+      allow create: if isAnalyst()
+                    && request.resource.data.is_synthetic == true;
+
+      // Incident deletion strictly prohibited to preserve auditability
+      allow delete: if false;
+    }
+
+    // Simulated Response Actions
+    match /response_actions/{actionId} {
+      allow read: if isAuthenticated();
+
+      // Proposed actions can be written by analysts; approvals/executions require validation
+      allow create: if isAnalyst() 
+                    && request.resource.data.simulation_mode == true;
+
+      // Critical approvals require Administrator role
+      allow update: if (isAnalyst() && resource.data.action_name != 'lock_account') || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // Append-Only Audit Trail Ledger
+    match /audit_trail/{entryId} {
+      // All authenticated SOC members can inspect audit logs
+      allow read: if isAuthenticated();
+
+      // Audit logs are append-only. Only system/analyst can append; updates/deletions forbidden
+      allow create: if isAuthenticated() 
+                    && request.resource.data.timestamp is string;
+      allow update, delete: if false;
+    }
+  }
+}

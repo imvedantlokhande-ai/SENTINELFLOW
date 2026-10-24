@@ -14,6 +14,8 @@ from sentinelflow.sample_data import (
     SYNTHETIC_COMPLIANCE_INDICATORS,
 )
 from sentinelflow.audit import AuditTrail
+from sentinelflow.auth import UserSession, get_default_demo_session
+from sentinelflow.rate_limiter import evaluate_rate_limit
 
 
 def init_session_state(st_module) -> None:
@@ -56,6 +58,10 @@ def init_session_state(st_module) -> None:
         # Config state
         st.session_state.gemini_api_key = GEMINI_API_KEY
         st.session_state.gemini_model = DEFAULT_GEMINI_MODEL
+
+        # Authentication & Role State
+        st.session_state.current_user = get_default_demo_session("analyst")
+        st.session_state.show_auth_modal = False
 
         # Privacy, Rate Limiting & Telemetry
         st.session_state.cookie_consent = None
@@ -130,16 +136,23 @@ def check_rate_limit(st_module, action_key: str, max_calls: int = 15, period_sec
     Returns:
         True if action is allowed; False if rate limited.
     """
-    if "rate_limits" not in st_module.session_state:
-        st_module.session_state["rate_limits"] = {}
+    user = getattr(st_module.session_state, "current_user", None)
+    user_id = user.uid if (user and hasattr(user, "uid")) else None
+    
+    # Process rate limit via centralized rate limiter engine
+    allowed, remaining, retry_after = evaluate_rate_limit(
+        action=action_key,
+        user_id=user_id,
+        max_requests=max_calls,
+        window_seconds=period_seconds,
+    )
 
+    # Maintain local session dictionary for backward compatibility with mock tests
     now = time.time()
     rate_limits = st_module.session_state["rate_limits"]
     history = rate_limits.get(action_key, [])
-    # Filter timestamps within window
     recent = [t for t in history if now - t < period_seconds]
-
-    if len(recent) >= max_calls:
+    if len(recent) >= max_calls or not allowed:
         rate_limits[action_key] = recent
         return False
 

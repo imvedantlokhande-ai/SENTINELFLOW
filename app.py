@@ -39,6 +39,7 @@ from sentinelflow.ui_components import (
     render_status_badge,
     render_seo_meta,
     render_pwa_install_banner,
+    render_auth_modal,
     render_cookie_consent,
     render_footer,
 )
@@ -102,6 +103,7 @@ render_header(
 )
 render_simulation_banner()
 render_pwa_install_banner()
+render_auth_modal()
 render_cookie_consent()
 
 # Quick Navigation Bar (Horizontal Tab Controls)
@@ -563,66 +565,114 @@ with nav_tabs[0]:
                     resp_col1, resp_col2 = st.columns(2)
                     with resp_col1:
                         if st.button("✅ Approve & Simulate Action", key=f"btn_approve_{current_inc.incident_id}", type="primary", use_container_width=True):
-                            # 1. Approve
-                            approved_req = response_engine.approve_action(prop, analyst_id="soc_analyst_01")
-                            # 2. Execute simulated containment against demo state
-                            executed_req, raw_state = response_engine.execute_simulated_action(
-                                approved_req,
-                                get_raw_state_dict(st),
-                            )
-                            # 3. Independent Verification
-                            verif = verification_engine.verify_action_state(executed_req, raw_state)
-                            executed_req.status = "verified" if verif.passed else "failed_verification"
+                            from sentinelflow.authorization import AuthorizationError
+                            from sentinelflow.rate_limiter import evaluate_rate_limit
+                            user = st.session_state.current_user
+                            allowed, remaining, retry_after = evaluate_rate_limit("execute_simulation", user_id=user.uid)
+                            if not allowed:
+                                st.error(f"⏳ Cooldown Active: Response action rate limit reached. Please wait {retry_after}s.")
+                                st.session_state.audit_trail.log(
+                                    event_type="RATE_LIMIT_TRIGGERED",
+                                    status="BLOCKED",
+                                    incident_id=current_inc.incident_id,
+                                    details=f"Rate limit triggered on execute_simulation by {user.email}.",
+                                )
+                            else:
+                                try:
+                                    # 1. Approve with server-side authorization check
+                                    approved_req = response_engine.approve_action(
+                                        prop,
+                                        analyst_id=user.email,
+                                        session=user,
+                                        incident=current_inc,
+                                    )
+                                    # 2. Execute simulated containment against demo state
+                                    executed_req, raw_state = response_engine.execute_simulated_action(
+                                        approved_req,
+                                        get_raw_state_dict(st),
+                                        session=user,
+                                        incident=current_inc,
+                                    )
+                                    # 3. Independent Verification
+                                    verif = verification_engine.verify_action_state(executed_req, raw_state)
+                                    executed_req.status = "verified" if verif.passed else "failed_verification"
 
-                            current_inc.proposed_action = executed_req
-                            current_inc.verification_result = verif
+                                    current_inc.proposed_action = executed_req
+                                    current_inc.verification_result = verif
 
-                            # 4. Log Audit Trail
-                            st.session_state.audit_trail.log(
-                                event_type="ACTION_APPROVED",
-                                status="SUCCESS",
-                                incident_id=current_inc.incident_id,
-                                action_id=prop.action_id,
-                                details=f"Analyst approved action {prop.action_name} on {prop.target_id}.",
-                            )
-                            st.session_state.audit_trail.log(
-                                event_type="SIMULATION_EXECUTED",
-                                status="SUCCESS",
-                                incident_id=current_inc.incident_id,
-                                action_id=prop.action_id,
-                                details=f"Simulated containment applied to demo state: {prop.action_name}.",
-                            )
-                            st.session_state.audit_trail.log(
-                                event_type="VERIFICATION_PASSED" if verif.passed else "VERIFICATION_FAILED",
-                                status="PASSED" if verif.passed else "FAILED",
-                                incident_id=current_inc.incident_id,
-                                action_id=prop.action_id,
-                                actor="verification_engine",
-                                details=verif.details,
-                            )
-                            record_telemetry_event(
-                                st,
-                                "ACTION_APPROVED_SIMULATION",
-                                {
-                                    "incident_id": current_inc.incident_id,
-                                    "action": prop.action_name,
-                                    "verified": verif.passed,
-                                },
-                            )
-                            st.rerun()
+                                    # 4. Log Audit Trail
+                                    st.session_state.audit_trail.log(
+                                        event_type="ACTION_APPROVED",
+                                        status="SUCCESS",
+                                        incident_id=current_inc.incident_id,
+                                        action_id=prop.action_id,
+                                        actor=user.email,
+                                        details=f"User {user.email} [{user.role}] approved action {prop.action_name} on {prop.target_id}.",
+                                    )
+                                    st.session_state.audit_trail.log(
+                                        event_type="SIMULATION_EXECUTED",
+                                        status="SUCCESS",
+                                        incident_id=current_inc.incident_id,
+                                        action_id=prop.action_id,
+                                        details=f"Simulated containment applied to demo state: {prop.action_name}.",
+                                    )
+                                    st.session_state.audit_trail.log(
+                                        event_type="VERIFICATION_PASSED" if verif.passed else "VERIFICATION_FAILED",
+                                        status="PASSED" if verif.passed else "FAILED",
+                                        incident_id=current_inc.incident_id,
+                                        action_id=prop.action_id,
+                                        actor="verification_engine",
+                                        details=verif.details,
+                                    )
+                                    record_telemetry_event(
+                                        st,
+                                        "ACTION_APPROVED_SIMULATION",
+                                        {
+                                            "incident_id": current_inc.incident_id,
+                                            "action": prop.action_name,
+                                            "verified": verif.passed,
+                                        },
+                                    )
+                                    st.rerun()
+                                except AuthorizationError as auth_err:
+                                    st.error(f"⛔ Authorization Denied: {auth_err}")
+                                    st.session_state.audit_trail.log(
+                                        event_type="AUTHORIZATION_FAILURE",
+                                        status="DENIED",
+                                        incident_id=current_inc.incident_id,
+                                        actor=user.email,
+                                        details=str(auth_err),
+                                    )
 
                     with resp_col2:
                         if st.button("❌ Reject Proposed Action", key=f"btn_reject_{current_inc.incident_id}", use_container_width=True):
-                            rejected_req = response_engine.reject_action(prop, analyst_id="soc_analyst_01")
-                            current_inc.proposed_action = rejected_req
-                            st.session_state.audit_trail.log(
-                                event_type="ACTION_REJECTED",
-                                status="REJECTED",
-                                incident_id=current_inc.incident_id,
-                                action_id=prop.action_id,
-                                details=f"Analyst rejected proposed action {prop.action_name}.",
-                            )
-                            st.rerun()
+                            from sentinelflow.authorization import AuthorizationError
+                            user = st.session_state.current_user
+                            try:
+                                rejected_req = response_engine.reject_action(
+                                    prop,
+                                    analyst_id=user.email,
+                                    session=user,
+                                )
+                                current_inc.proposed_action = rejected_req
+                                st.session_state.audit_trail.log(
+                                    event_type="ACTION_REJECTED",
+                                    status="REJECTED",
+                                    incident_id=current_inc.incident_id,
+                                    action_id=prop.action_id,
+                                    actor=user.email,
+                                    details=f"User {user.email} rejected proposed action {prop.action_name}.",
+                                )
+                                st.rerun()
+                            except AuthorizationError as auth_err:
+                                st.error(f"⛔ Authorization Denied: {auth_err}")
+                                st.session_state.audit_trail.log(
+                                    event_type="AUTHORIZATION_FAILURE",
+                                    status="DENIED",
+                                    incident_id=current_inc.incident_id,
+                                    actor=user.email,
+                                    details=str(auth_err),
+                                )
 
                 # Display Verification Results if executed
                 if current_inc.verification_result:

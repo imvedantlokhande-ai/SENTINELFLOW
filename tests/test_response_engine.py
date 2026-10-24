@@ -103,7 +103,7 @@ def test_duplicate_execution_blocked():
     assert "sess-9011" in demo_state["synthetic_revoked_sessions"]
 
     # Attempting to execute the already executed action again
-    with pytest.raises(ResponseExecutionError, match="must be in 'approved' status"):
+    with pytest.raises(ResponseExecutionError, match="(Duplicate execution blocked|must be in 'approved' status)"):
         engine.execute_simulated_action(executed, demo_state)
 
 
