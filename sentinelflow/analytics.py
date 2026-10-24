@@ -124,6 +124,7 @@ def build_severity_donut_chart(metrics: Dict[str, Any]) -> go.Figure:
     )
 
     fig.update_layout(
+        autosize=True,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=10, r=10, t=10, b=10),
@@ -166,6 +167,7 @@ def build_attack_vectors_bar_chart(attack_vectors: List[Dict[str, Any]]) -> go.F
     )
 
     fig.update_layout(
+        autosize=True,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=10, r=10, t=10, b=10),
@@ -265,6 +267,7 @@ def build_global_threat_map(geo_points: List[Dict[str, Any]], category_filter: s
         )
 
     fig.update_layout(
+        autosize=True,
         paper_bgcolor=COLOR_BG_DARK,
         plot_bgcolor=COLOR_BG_DARK,
         margin=dict(l=0, r=0, t=10, b=10),
@@ -381,6 +384,7 @@ def build_entity_relationship_graph(incident: Incident, events: List[SecurityEve
 
     fig = go.Figure(data=[edge_trace, node_trace])
     fig.update_layout(
+        autosize=True,
         paper_bgcolor=COLOR_PANEL_BG,
         plot_bgcolor=COLOR_PANEL_BG,
         showlegend=False,

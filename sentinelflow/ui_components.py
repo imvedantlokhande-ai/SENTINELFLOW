@@ -219,14 +219,37 @@ def inject_custom_css():
         margin-bottom: 0.75rem;
     }}
 
-    /* Buttons customization & Touch Targets (WCAG 2.2 AA) */
+    /* Smooth Flutter-grade Touch Interactions & Micro-animations */
+    * {{
+        -webkit-tap-highlight-color: rgba(0, 240, 255, 0.15) !important;
+        box-sizing: border-box;
+    }}
+
+    /* Custom Cyber Sleek Scrollbar */
+    ::-webkit-scrollbar {{
+        width: 6px;
+        height: 6px;
+    }}
+    ::-webkit-scrollbar-track {{
+        background: #070b12;
+    }}
+    ::-webkit-scrollbar-thumb {{
+        background: #1e293b;
+        border-radius: 3px;
+    }}
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {COLOR_ACCENT_CYAN};
+        box-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+    }}
+
+    /* Buttons customization & Touch Targets (WCAG 2.2 AA & Material/Flutter) */
     .stButton>button {{
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         font-family: 'Outfit', sans-serif !important;
         font-weight: 600 !important;
         letter-spacing: 0.04em !important;
-        transition: all 0.2s ease-in-out !important;
-        min-height: 44px !important;
+        transition: transform 0.12s ease-out, box-shadow 0.2s ease-in-out !important;
+        min-height: 46px !important;
         min-width: 44px !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -234,7 +257,20 @@ def inject_custom_css():
     }}
 
     .stButton>button:hover {{
-        box-shadow: 0 0 12px rgba(0, 240, 255, 0.3) !important;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.35) !important;
+    }}
+
+    .stButton>button:active {{
+        transform: scale(0.97) !important;
+    }}
+
+    /* Interactive Card Micro-elevation */
+    .soc-card {{
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease !important;
+    }}
+    .soc-card:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
     }}
 
     /* Accessibility Focus Indicators */
@@ -243,48 +279,133 @@ def inject_custom_css():
         outline-offset: 2px !important;
     }}
 
-    /* Text inputs touch targets */
+    /* Inputs touch target sizing */
     .stTextInput input, .stSelectbox select {{
-        min-height: 44px !important;
+        min-height: 46px !important;
+        border-radius: 6px !important;
     }}
 
-    /* Mobile Responsiveness & Breakpoints */
-    @media (max-width: 768px) {{
+    /* =========================================================================
+       DEVICE BREAKPOINT OPTIMIZATION (PC, LAPTOP, TABLET, MOBILE)
+       ========================================================================= */
+
+    /* Desktop & Large Laptops (1200px+) */
+    @media (min-width: 1200px) {{
         .block-container {{
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
-            padding-top: 1rem !important;
+            max-width: 1560px !important;
+            margin: 0 auto !important;
+        }}
+    }}
+
+    /* Tablet Screen Optimization (768px - 1024px: iPad, Android Tablets, Foldables) */
+    @media (min-width: 768px) and (max-width: 1024px) {{
+        .block-container {{
+            max-width: 96% !important;
+            padding: 1.25rem 1rem !important;
+        }}
+        /* Top Control Bar: adapt 4 columns into 2x2 grid */
+        div[data-testid="column"] {{
+            min-width: 48% !important;
+            flex: 1 1 48% !important;
+            margin-bottom: 0.75rem !important;
+        }}
+        .kpi-tile {{
+            padding: 0.75rem 0.85rem !important;
+        }}
+        .kpi-value {{
+            font-size: 1.5rem !important;
+        }}
+        .soc-brand-title {{
+            font-size: 1.25rem !important;
+        }}
+    }}
+
+    /* Mobile Phones (320px - 767px: iPhone SE, 13/14/15, Pixel, Galaxy) */
+    @media (max-width: 767px) {{
+        /* Full width stacking for columns */
+        div[data-testid="column"] {{
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+            margin-bottom: 0.85rem !important;
+        }}
+
+        .block-container {{
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+            padding-top: 0.75rem !important;
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom, 16px)) !important;
+        }}
+
+        /* Touch Swipeable Horizontal Tabs */
+        .stTabs [data-baseweb="tab-list"] {{
+            display: flex !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            flex-wrap: nowrap !important;
+            scrollbar-width: none !important;
+            gap: 0.35rem !important;
+            padding-bottom: 0.3rem !important;
+        }}
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {{
+            display: none !important;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+            font-size: 0.82rem !important;
+            padding: 0.5rem 0.75rem !important;
         }}
 
         .soc-header {{
             flex-direction: column !important;
             align-items: flex-start !important;
-            gap: 0.75rem !important;
-            padding: 0.75rem 1rem !important;
+            padding: 0.75rem 0.85rem !important;
+            gap: 0.65rem !important;
         }}
 
         .soc-brand {{
             width: 100% !important;
         }}
 
+        .soc-brand-title {{
+            font-size: 1.12rem !important;
+        }}
+
+        .soc-brand-sub {{
+            font-size: 0.65rem !important;
+        }}
+
         .kpi-tile {{
             margin-bottom: 0.5rem !important;
+            padding: 0.75rem !important;
+        }}
+
+        .kpi-value {{
+            font-size: 1.4rem !important;
         }}
 
         .soc-card {{
             padding: 0.85rem 1rem !important;
         }}
+
+        /* 48px touch targets for mobile thumb navigation */
+        .stButton>button, .stTextInput input, .stSelectbox select {{
+            min-height: 48px !important;
+            font-size: 0.9rem !important;
+        }}
     }}
 
-    @media (max-width: 480px) {{
+    /* Smallest Mobile Displays (320px - 375px) */
+    @media (max-width: 375px) {{
         .soc-brand-title {{
-            font-size: 1.15rem !important;
+            font-size: 1rem !important;
         }}
-        .soc-brand-sub {{
-            font-size: 0.65rem !important;
-        }}
-        .kpi-value {{
+        .soc-brand-icon {{
             font-size: 1.4rem !important;
+        }}
+        .badge {{
+            font-size: 0.62rem !important;
+            padding: 0.15rem 0.35rem !important;
         }}
     }}
 
@@ -336,6 +457,20 @@ def inject_custom_css():
         padding: 1rem 1.25rem;
         margin-bottom: 1rem;
         box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
+    }}
+
+    /* PWA Install Banner Card */
+    .soc-pwa-card {{
+        background: linear-gradient(90deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 11, 18, 0.95) 100%);
+        border: 1px solid rgba(0, 240, 255, 0.4);
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
     }}
     </style>
     """
@@ -453,7 +588,7 @@ def render_seo_meta(
     path: str = "/",
     og_image: str = "https://sentinelflow.ai/static/og_preview.svg",
 ):
-    """Inject semantic SEO metadata, canonical URL, Open Graph, and Twitter card tags."""
+    """Inject semantic SEO metadata, canonical URL, Open Graph, Twitter card, and PWA manifest/service worker tags."""
     canonical_url = f"https://sentinelflow.ai{path}"
     meta_html = f"""
     <!-- SEO & Social Sharing Meta Tags -->
@@ -469,13 +604,64 @@ def render_seo_meta(
     <meta name="twitter:title" content="{title}">
     <meta name="twitter:description" content="{description}">
     <meta name="twitter:image" content="{og_image}">
+
+    <!-- Progressive Web App (PWA) Metadata -->
+    <link rel="manifest" href="/app/static/manifest.json">
+    <meta name="theme-color" content="#00f0ff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SentinelFlow">
+    <link rel="apple-touch-icon" href="/app/static/icon-192.svg">
+    <link rel="icon" type="image/svg+xml" href="/app/static/favicon.svg">
+
+    <!-- Service Worker Registration for Offline & PWA Execution -->
     <script>
       if (document.title !== "{title}") {{
         document.title = "{title}";
       }}
+      if ('serviceWorker' in navigator) {{
+        window.addEventListener('load', function() {{
+          navigator.serviceWorker.register('/app/static/service-worker.js', {{ scope: '/' }})
+            .then(function(reg) {{
+              console.log('[PWA] ServiceWorker registered successfully with scope:', reg.scope);
+            }})
+            .catch(function(err) {{
+              console.log('[PWA] ServiceWorker info:', err);
+            }});
+        }});
+      }}
     </script>
     """
     st.markdown(meta_html, unsafe_allow_html=True)
+
+
+def render_pwa_install_banner():
+    """Render a responsive, native-app install suggestion banner for PC, Laptop, Tablet & Mobile."""
+    if st.session_state.get("dismiss_pwa_banner", False):
+        return
+
+    st.markdown(
+        """
+        <div class="soc-pwa-card">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <span style="font-size:1.4rem;">📲</span>
+                <div>
+                    <div style="font-size:0.85rem; font-weight:700; color:#00f0ff;">
+                        INSTALL SENTINELFLOW PWA
+                    </div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">
+                        Install as a standalone app on PC, Mac, Tablet, or Mobile for offline caching and zero-latency windowed SOC monitoring.
+                    </div>
+                </div>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; font-family:'JetBrains Mono',monospace;">
+                Chrome / Edge: Click (⊕ Install) in URL bar &bull; Safari / iOS: Tap Share → 'Add to Home Screen'
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_cookie_consent():
@@ -551,8 +737,8 @@ def render_cookie_consent():
                         st.rerun()
 
 
-def render_footer():
-    """Render standard footer with links, copyright, and Cookie Settings trigger."""
+def render_footer(key_suffix: str = ""):
+    """Render standard footer with links, copyright, PWA status, and Cookie Settings trigger."""
     st.markdown(
         f"""
         <div class="soc-footer">
@@ -568,18 +754,20 @@ def render_footer():
                 <a href="/Terms" class="soc-footer-link">Terms & Conditions</a>
             </div>
             <p style="font-size:0.75rem; color:#64748b; margin:0.3rem 0;">
-                <b>SentinelFlow AI</b> v1.2.0-prod &bull; Autonomous Cybersecurity Incident Investigation & Safe Response Simulation.
+                <b>SentinelFlow AI</b> v1.2.0-pwa &bull; Autonomous Cybersecurity Incident Investigation & Safe Response Simulation.
             </p>
             <p style="font-size:0.7rem; color:#475569; margin:0.2rem 0;">
-                All scenarios, alerts, indicators of compromise, and telemetry are synthetic. No production credentials or live endpoints are accessed.
+                PWA Enabled &bull; Optimised for Mobile, Tablet, Laptop, and PC &bull; Air-Gapped Synthetic SOC Telemetry
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    col_c, _ = st.columns([3, 9])
+    col_c, col_pwa = st.columns([3, 9])
     with col_c:
-        if st.button("🍪 Manage Cookie Preferences", key=f"footer_cookie_btn_{st.session_state.get('footer_count', 0)}", type="secondary"):
+        btn_key = f"footer_cookie_btn_{key_suffix}" if key_suffix else "footer_cookie_btn"
+        if st.button("🍪 Manage Cookie Preferences", key=btn_key, type="secondary"):
             st.session_state.show_cookie_settings = True
             st.rerun()
+
 

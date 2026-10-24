@@ -148,3 +148,54 @@ def test_production_deployment_configs_contain_hsts_and_security_headers():
         nginx_content = f.read()
         assert "Strict-Transport-Security" in nginx_content
         assert "proxy_pass http://127.0.0.1:8501" in nginx_content
+
+
+def test_pwa_manifest_and_service_worker_configuration():
+    """Verify W3C PWA Manifest, Service Worker, and static file serving."""
+    import json
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_dir = os.path.join(base_dir, "static")
+
+    manifest_path = os.path.join(static_dir, "manifest.json")
+    sw_path = os.path.join(static_dir, "service-worker.js")
+    icon192_path = os.path.join(static_dir, "icon-192.svg")
+    icon512_path = os.path.join(static_dir, "icon-512.svg")
+    offline_path = os.path.join(static_dir, "offline.html")
+    config_path = os.path.join(base_dir, ".streamlit", "config.toml")
+
+    assert os.path.exists(manifest_path), "manifest.json must exist"
+    assert os.path.exists(sw_path), "service-worker.js must exist"
+    assert os.path.exists(icon192_path), "icon-192.svg must exist"
+    assert os.path.exists(icon512_path), "icon-512.svg must exist"
+    assert os.path.exists(offline_path), "offline.html must exist"
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest_data = json.load(f)
+        assert manifest_data["display"] == "standalone"
+        assert manifest_data["theme_color"] == "#00f0ff"
+        assert len(manifest_data["icons"]) >= 2
+
+    with open(sw_path, "r", encoding="utf-8") as f:
+        sw_content = f.read()
+        assert "caches.open" in sw_content
+        assert "offline.html" in sw_content
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        config_content = f.read()
+        assert "enableStaticServing = true" in config_content
+
+
+def test_cross_device_responsive_css_rules_present():
+    """Verify UI components contain device breakpoints for PC, laptop, tablet, and mobile."""
+    from sentinelflow.ui_components import inject_custom_css
+    import inspect
+    css_source = inspect.getsource(inject_custom_css)
+
+    assert "min-width: 1200px" in css_source, "Desktop/PC breakpoint required"
+    assert "min-width: 768px" in css_source and "max-width: 1024px" in css_source, "Tablet breakpoint required"
+    assert "max-width: 767px" in css_source, "Mobile phone breakpoint required"
+    assert "max-width: 375px" in css_source, "Small screen mobile breakpoint required"
+    assert "safe-area-inset-bottom" in css_source, "Safe area insets required"
+    assert "min-height: 48px" in css_source, "Touch target sizing required"
+    assert "prefers-reduced-motion" in css_source, "Accessibility reduced motion required"
+

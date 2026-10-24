@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="pwaBg192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e17" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="pwaShield192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <filter id="pwaGlow192" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="192" height="192" rx="36" fill="url(#pwaBg192)" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Glowing outer shield -->
+  <path d="M96 28 L144 48 C144 98 122 142 96 160 C70 142 48 98 48 48 Z" 
+        fill="none" 
+        stroke="url(#pwaShield192)" 
+        stroke-width="5" 
+        filter="url(#pwaGlow192)" />
+
+  <!-- Inner solid shield -->
+  <path d="M96 40 L134 56 C134 94 116 130 96 146 C76 130 58 94 58 56 Z" 
+        fill="rgba(0, 240, 255, 0.12)" 
+        stroke="#00f0ff" 
+        stroke-width="2.5" />
+
+  <!-- Core Circuit Node -->
+  <circle cx="96" cy="92" r="16" fill="#00f0ff" filter="url(#pwaGlow192)"/>
+  <circle cx="96" cy="92" r="8" fill="#ffffff" />
+
+  <!-- Radiating circuit branches -->
+  <line x1="96" y1="56" x2="96" y2="76" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="96" y1="108" x2="96" y2="132" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="74" y1="92" x2="80" y2="92" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="112" y1="92" x2="118" y2="92" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/>
+</svg>

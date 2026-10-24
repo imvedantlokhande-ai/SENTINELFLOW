@@ -38,6 +38,7 @@ from sentinelflow.ui_components import (
     render_severity_badge,
     render_status_badge,
     render_seo_meta,
+    render_pwa_install_banner,
     render_cookie_consent,
     render_footer,
 )
@@ -100,6 +101,7 @@ render_header(
     gemini_ready=investigation_engine.gemini_client.is_configured(),
 )
 render_simulation_banner()
+render_pwa_install_banner()
 render_cookie_consent()
 
 # Quick Navigation Bar (Horizontal Tab Controls)
