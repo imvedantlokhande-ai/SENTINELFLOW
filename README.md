@@ -1,336 +1,275 @@
-# SentinelFlow AI 🛡️
+# SentinelFlow AI — Autonomous Cybersecurity Incident Investigation & Response Simulation
 
-### Intelligent Cybersecurity Incident Investigation & Autonomous Response Platform
-
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.4.2-black?logo=next.js)](https://nextjs.org/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gen%20AI-Gemini%202.5%20Flash-4285F4?logo=google)](https://aistudio.google.com/)
-[![Zod](https://img.shields.io/badge/Validation-Zod%20Schema-3E67B1)](https://zod.dev/)
-[![Security Guardrails](https://img.shields.io/badge/Security-Human--in--the--Loop-emerald)](https://github.com/imvedantlokhande-ai/SENTINELFLOW)
-
-SentinelFlow AI is an AI-enabled cybersecurity incident investigation and response platform designed to help security teams analyze suspicious activity, correlate evidence, assess risk, and execute controlled response workflows.
-
-Built for the *PromptWars — Build Beyond AI* challenge, SentinelFlow demonstrates how AI reasoning can be combined with secure software engineering, human oversight, automated verification, and measurable efficiency.
-
-> *Project status:* Competition prototype  
-> *Deployment target:* Vercel  
-> *AI integration:* Google Gemini  
-> *Primary focus:* Security, reliability, efficiency, accessibility, and responsible automation
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Framework: Streamlit](https://img.shields.io/badge/framework-Streamlit-FF4B4B.svg)](https://streamlit.io/)
+[![Google GenAI SDK](https://img.shields.io/badge/google--genai-v2.0+-4285F4.svg)](https://ai.google.dev/)
+[![Tests: Pytest Passed](https://img.shields.io/badge/tests-44%20passed-success.svg)](https://pytest.org/)
+[![Status: Simulated SOC](https://img.shields.io/badge/simulation-air--gapped-00f0ff.svg)](#synthetic-data-disclaimer)
 
 ---
 
-## ⚡ Fastest Way to Demonstrate to a Judge (10-Minute Walkthrough)
+## 1. Product Overview
 
-1. *Open the Dashboard*: Navigate to http://localhost:3000 (or deployed Vercel URL).
-2. *Launch Demo Scenario: Click the *"DEMO SCENARIO"* button in the top navigation or *"Launch Demo Workflow"** on the hero banner.
-   - Automatically loads *Incident INC-2026-8812: *Possible Account Compromise — Unusual Login and Session Activity.
-3. *Inspect AI Investigation*:
-   - Synthesizes 5 correlated events: geographic anomaly (Bulgaria Tor exit node), credential stuffing burst, session token hijack, bulk PII download, and non-standard egress stream.
-   - Computes *Risk Score: 92/100 (Critical)* and *Confidence: 88/100*.
-   - Displays *Evidence-Backed Findings* with clickable [EV-101], [EV-103] tags. Click any tag to open the *Raw Telemetry Inspector* showing MITRE ATT&CK mappings.
-4. *Authorize Containment Action*:
-   - Click *"Containment Center"* (or top tab).
-   - Review proposed action: SIMULATE_LOCK_ACCOUNT or SIMULATE_REVOKE_SESSION.
-   - Click *"Authorize & Execute"*. The modal requires explicit human operator confirmation.
-   - Check the authorization box and submit.
-5. *Verify Independent Target State*:
-   - Observe the *Simulated Target State* card:
-     - Target: sarah.chen@fintech-enterprise.internal
-     - Status changes from ACTIVE to *LOCKED*.
-     - Active sessions change from 3 to *0*.
-     - Verification Badge: *INDEPENDENTLY VERIFIED BY SEPARATE STATE QUERY*.
-6. *Inspect Immutable Audit Trail*:
-   - Navigate to the *"Audit Trail"* tab to verify that the approval, action result, and verification status were appended.
-7. *Negative Controls Sandbox*:
-   - In the Response Center, click *"1. Test Missing Approval"* or *"2. Test Non-Allowlisted Action"* to demonstrate that unauthorized/unapproved attempts are strictly rejected with HTTP 400/403.
-8. *Efficiency Benchmark*:
-   - Navigate to *"Efficiency & ROI"* to see the 99.4% MTTR acceleration comparison (2.4s AI vs 40m manual SOC baseline).
+**SentinelFlow AI** is an AI-assisted cybersecurity operations center (SOC) and incident investigation platform. Designed for security analysts, it demonstrates how state-of-the-art AI (powered by Google's official `google-genai` SDK) can correlate fragmented synthetic telemetry, investigate complex cyber incidents, validate supporting evidence, calculate transparent risk scores, propose human-in-the-loop containment actions, and independently verify state transitions within an air-gapped simulation.
 
----
+### The Operational Workflow
 
-## 🚀 Overview
-
-Traditional security investigations often require analysts to manually inspect logs, correlate events, determine incident severity, and decide how to respond.
-
-SentinelFlow AI aims to simplify this process through an integrated workflow that turns structured security events into explainable investigations and controlled response actions.
-
-Instead of stopping at threat detection, SentinelFlow connects investigation, decision support, response approval, execution, and verification in a single interface.
+```
+Synthetic Security Events
+       │
+       ▼
+Deterministic Event Correlation Engine
+       │
+       ▼
+AI / Rule-Based Investigation Engine (Gemini 3.8 Flash / Deterministic Fallback)
+       │
+       ▼
+Evidence Validation & Transparent Risk Scoring
+       │
+       ▼
+Human-in-the-Loop Analyst Authorization Gate
+       │
+       ▼
+Simulated Response Execution (Strict Allowlist)
+       │
+       ▼
+Independent State Verification Engine
+       │
+       ▼
+Append-Only Application Audit Trail
+```
 
 ---
 
-## ✨ Key Features
+## 2. Problem Statement
 
-### 1. Security Operations Dashboard
-- Overview of incidents, severity levels, and response status.
-- Recent security activity and incident summaries.
-- Risk indicators and investigation metrics.
-- A guided demonstration workflow.
+Modern SOC analysts face alert fatigue, processing hundreds of disjointed signals across endpoints, clouds, and networks. Manual correlation takes an average of **18 to 25 minutes per incident**, risking dwell time and lateral adversary movement. Conversely, fully autonomous containment without human oversight poses catastrophic operational risks (e.g., unintended lockout of domain controllers or critical customer service accounts).
 
-### 2. AI-Powered Investigation
-- Analyze structured security event data using Google Gemini.
-- Correlate related events and entities.
-- Generate incident summaries and risk assessments.
-- Identify suspicious patterns and alternative explanations.
-- Link findings to supporting evidence IDs.
-- Distinguish observed evidence from AI-generated inferences.
-
-### 3. Controlled Response Automation
-- Generate predefined incident response recommendations.
-- Require explicit approval before consequential simulated actions.
-- Execute only allowlisted response actions.
-- Verify simulated state changes after execution.
-- Handle rejected, failed, or unsupported actions safely.
-
-### 4. Incident Timeline and Audit Trail
-- Track investigation events and response decisions.
-- Record approval and execution outcomes.
-- Display verification status.
-- Make the incident lifecycle easier to understand and review.
-
-### 5. Reliability and Fallbacks
-- Validate incoming requests and AI-generated outputs.
-- Handle malformed responses and provider errors.
-- Support a deterministic fallback when configured AI services are unavailable.
-- Clearly distinguish fallback analysis from Gemini-generated results.
-
-### 6. Efficiency Analytics
-- Track investigation execution time where implemented.
-- Count evidence items processed and findings linked to evidence.
-- Report verified response actions.
-- Compare AI-assisted investigation time with an explicitly labelled manual baseline.
+**SentinelFlow AI solves this dilemma** by providing high-speed AI investigation and deterministic correlation while enforcing a strict **human authorization gate** and **independent state verification** before any simulated containment is applied.
 
 ---
 
-## 🧠 How It Works
+## 3. System Architecture
 
-mermaid
-graph TD
-    A[Telemetry Event Stream<br/>EV-101 to EV-105] --> B[Incident Correlation Engine]
-    B --> C[SentinelFlow Core API<br/>POST /api/investigate]
-    
-    C -->|If Key Present| D[Google Gemini 2.5 Flash<br/>Low-Temp Structured Output]
-    C -->|If Key Missing or Failure| E[Deterministic Heuristic<br/>SOC Rule Engine]
-    
-    D --> F[Strict Zod Schema Validation<br/>& Evidence ID Grounding Check]
-    E --> F
-    
-    F --> G[Investigation Workspace<br/>Timeline, MITRE Mapping, Findings]
-    G --> H[Response Center<br/>Containment Proposal]
-    
-    H --> I{Human Operator<br/>Explicit Approval?}
-    I -->|Rejected| J[HTTP 403 / Audit Logged]
-    I -->|Approved| K[Allowlisted Action Engine<br/>POST /api/respond]
-    
-    K --> L[Simulated Target Entity State<br/>In-Memory Isolation / Token Invalidation]
-    L --> M[Independent State Verification Query]
-    M --> N[Append-Only Audit Trail<br/>GET /api/audit]
-
-
-The core workflow follows these steps:
-
-1. *Detect:* Select a predefined simulated security incident.
-2. *Collect:* Gather related security events and evidence.
-3. *Investigate:* Analyze the evidence using Gemini or the clearly identified fallback.
-4. *Assess:* Generate findings, severity, risk score, confidence, and alternative explanations.
-5. *Recommend:* Propose a predefined response action with its rationale and expected effect.
-6. *Approve:* Require human authorization for the simulated response.
-7. *Execute:* Run the approved action against the demo environment.
-8. *Verify:* Independently check whether the simulated state changed as expected.
-9. *Audit:* Record the outcome and verification status.
-
----
-
-## 🏗️ Technology Stack
-
-| Technology | Purpose |
-|---|---|
-| Next.js 16 (App Router) | Application framework and server-side routes |
-| TypeScript | Type safety and maintainable development |
-| Vanilla CSS / Tailwind | Responsive SOC interface, dark theme, and high-contrast accessibility |
-| Google Gemini (2.5 Flash) | AI-powered security investigation and structured synthesis |
-| Zod | Strict request and model-output schema validation |
-| Node Test Runner | 13 automated unit, integration, and security resilience tests |
-| Vercel | Instant serverless deployment target |
+```
+sentinelflow-ai/
+├── app.py                      # Main SOC Dashboard (3-column layout & workspace)
+├── requirements.txt            # Python dependencies (Streamlit, Plotly, GenAI, Pydantic, Pytest)
+├── README.md                   # Comprehensive platform documentation
+├── .gitignore                  # Git exclusions (credentials, caches, venv)
+├── .env.example                # Safe environment variable template (placeholders only)
+├── .streamlit/
+│   └── config.toml             # Futuristic SOC theme & security configuration
+├── pages/
+│   ├── 1_Incidents.py          # Incident queue, filter table & relationship inspector
+│   ├── 2_Threat_Intelligence.py # Global geo threat map & adversary tracking
+│   ├── 3_Response_Center.py    # Human authorization center & simulation registries
+│   ├── 4_Audit_Timeline.py     # Append-only chronological audit ledger
+│   ├── 5_Analytics.py          # Operational metrics, charts & efficiency benchmarks
+│   └── 6_Settings.py           # Gemini API key management & demo reset controls
+├── sentinelflow/
+│   ├── __init__.py             # Package initialization & version metadata
+│   ├── config.py               # Theme colors, allowlists & environment settings
+│   ├── models.py               # Strict Pydantic models for events, findings & responses
+│   ├── sample_data.py          # 6 deterministic synthetic scenarios & geo markers
+│   ├── event_correlation.py    # Multi-rule deterministic correlation engine
+│   ├── risk_engine.py          # Transparent mathematical risk attribution engine
+│   ├── investigation.py        # Orchestrator for Gemini AI and deterministic fallback
+│   ├── gemini_client.py        # Official google-genai client with Pydantic validation
+│   ├── response_engine.py      # Safe human-supervised response execution
+│   ├── verification.py         # Independent post-action state verification engine
+│   ├── audit.py                # Append-only audit logger with secret redaction
+│   ├── analytics.py            # Real SOC metrics & Plotly visualization builders
+│   ├── state.py                # Streamlit session state management & data reset
+│   └── ui_components.py        # Glassmorphic SOC cards, badges & header bar
+└── tests/
+    ├── __init__.py
+    ├── test_models.py          # Validation bounds, missing fields, invalid IDs
+    ├── test_correlation.py     # Deterministic multi-rule correlation tests
+    ├── test_risk_engine.py     # Risk scoring, mitigating vs escalating factors
+    ├── test_investigation.py   # Gemini mocking, hallucinated ID rejection, fallback
+    ├── test_response_engine.py # Allowlist enforcement, approval gates, duplicate block
+    ├── test_verification.py    # Independent verification passes & intentional failures
+    ├── test_audit.py           # Audit append-only integrity & secret redaction
+    ├── test_analytics.py       # Metrics calculation accuracy & Plotly generation
+    └── test_workflow.py        # Complete end-to-end integration lifecycle test
+```
 
 ---
 
-## 🔐 Security Design
+## 4. Key Features
 
-Security is a core design consideration.
-
-- *Server-side secrets:* AI provider credentials (GEMINI_API_KEY) remain strictly on the server.
-- *Input validation:* API requests are validated with Zod before processing.
-- *Output validation:* Model responses are strictly validated against the expected schema.
-- *Evidence validation:* Findings must reference evidence associated with the investigation. Unknown or hallucinated IDs trigger safe fallback.
-- *Action allowlisting:* Only predefined response actions (SIMULATE_LOCK_ACCOUNT, SIMULATE_REVOKE_SESSION, SIMULATE_ISOLATE_HOST, SIMULATE_ESCALATE_INCIDENT) are accepted.
-- *Human approval:* Consequential actions fail with HTTP 403 without explicit operator authorization.
-- *Safe execution:* Model-generated text is never executed as arbitrary code or commands.
-- *Idempotency protection:* Response executions are guarded by unique idempotency tokens, preventing accidental duplicate execution.
-- *Error handling:* Failures are reported without exposing secrets or internal stack traces.
-- *Auditability:* Investigation and response outcomes are recorded in an append-only audit trail.
-
-### Prototype Limitations
-
-The demonstration uses simulated security events and simulated containment actions. It does not connect to real enterprise security infrastructure or perform real account lockouts.
-
-Target entity states and audit trails operate in a controlled server-side memory layer for portable, zero-dependency deployment. State resets across cold-start serverless instances.
-
----
-
-## 📊 Efficiency and Evaluation
-
-| Evaluation Area | Demonstration in SentinelFlow |
-|---|---|
-| *Code Quality* | TypeScript, modular architecture, validated API contracts, and clean design |
-| *Security* | Server-side secrets, mandatory human approval, allowlisted actions, and safe failures |
-| *Efficiency* | Real-time investigation timing, evidence-processing count, and MTTR comparison |
-| *Testing* | 13 automated tests covering happy path, failure injection, and resilience |
-| *Accessibility* | Semantic HTML, ARIA states, visible focus rings, and high-contrast color scheme |
-| *Alignment* | AI reasoning, controlled automation, independent verification, and audit trail |
+- **Futuristic SOC Design System:** Near-black navy palette (`#0a0e17`), glassmorphic panels with cyan-blue borders (`#00f0ff`), glowing status badges, and compact high-density layout.
+- **6 Seeded Synthetic Scenarios:**
+  1. *Scenario 1:* Anomalous Administrator Login from Eastern Europe IP.
+  2. *Scenario 2:* Credential Stuffing & Password Spraying culminating in Payroll Access.
+  3. *Scenario 3:* Service Account Compromise via Tor Exit Node with S3 Invoice Exfiltration.
+  4. *Scenario 4:* Suspicious Bulk Export with Sanctioned Disaster Recovery Ticket (Benign).
+  5. *Scenario 5:* Compliant Corporate SSO Login with Hardware Posture (Benign).
+  6. *Scenario 6:* High-Volume C2 Beaconing & 4.2 GB Exfiltration via Encrypted TLS Port 8443.
+- **Dual Investigation Modes:**
+  - *Gemini AI Mode:* Calls Google's official `google-genai` SDK using `gemini-3.8-flash` with strict Pydantic JSON schema validation and evidence filtering.
+  - *Deterministic Demo Mode:* Works completely offline with zero API keys required, applying transparent rule heuristics and scenario findings.
+- **Strict Response Allowlist:**
+  - `revoke_session`: Invalidates active session tokens.
+  - `lock_account`: Temporarily disables synthetic account credentials.
+  - `escalate_incident`: Routes incident to senior SOC tiers for forensic investigation.
+  - `mark_monitoring`: Retains incident in telemetry watchlist without disruptive containment.
+- **Independent State Verification:** Validates that the requested state mutation genuinely occurred in the simulation registries before reporting success.
+- **Append-Only Audit Ledger:** Automatically records all analyst approvals, model findings, and verification outcomes with automated credential/secret redaction.
 
 ---
 
-## 📡 API Endpoint Reference
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | /api/health | Readiness health check, Gemini provider status, and environment stats |
-| GET | /api/incidents | List all open incidents and high-level SOC summary statistics |
-| GET | /api/incidents/[id] | Fetch single incident case with all synthetic telemetry events |
-| POST | /api/investigate | Trigger Gemini AI or Heuristic investigation for an incident case |
-| POST | /api/respond | Execute allowlisted containment action with human approval check |
-| POST | /api/reset | Reset simulated environment to pristine baseline for repeated demos |
-| GET | /api/audit | Fetch append-only audit trail and verification records |
-
----
-
-## ⚙️ Getting Started
+## 5. Installation & Setup
 
 ### Prerequisites
 
-- Node.js v20.x or v24.x
-- npm v10+
-- Git
+- Python 3.11 or higher (Python 3.11, 3.12, 3.13, 3.14 supported).
+- Windows PowerShell, macOS Terminal, or Linux Bash.
+- Git.
 
-### 1. Clone the repository
+### Windows PowerShell Setup
 
-bash
+```powershell
+# 1. Clone the repository
 git clone https://github.com/imvedantlokhande-ai/SENTINELFLOW.git
 cd SENTINELFLOW
 
+# 2. Create and activate a Python virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-### 2. Install dependencies
+# 3. Upgrade pip and install dependencies
+pip install -r requirements.txt
+```
 
-bash
-npm install
+### Linux / macOS Setup
 
+```bash
+# 1. Clone the repository
+git clone https://github.com/imvedantlokhande-ai/SENTINELFLOW.git
+cd SENTINELFLOW
 
-### 3. Configure environment variables (Optional)
+# 2. Create and activate a Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-Create a .env.local file in the project root:
-
-env
-# Optional: If omitted, SentinelFlow runs cleanly in Deterministic Fallback Mode
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
-
-
-> *Note on Demo Mode: If GEMINI_API_KEY is not provided, SentinelFlow runs in **High-Fidelity Deterministic Fallback Mode*. The UI transparently identifies when the deterministic engine is active.
-
-### 4. Start the development server
-
-bash
-npm run dev
-
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 5. Run automated test suite
-
-bash
-npm test
-
-
-Tests cover 13 comprehensive scenarios:
-- Request schema validation (valid & invalid)
-- Malformed AI response handling & Zod rejection
-- Hallucinated / unknown evidence ID rejection
-- Out-of-range risk score detection
-- Unauthorized action rejection (missing human approval)
-- Non-allowlisted action rejection
-- Idempotency guard execution (duplicate prevention)
-- Independent target state verification
-- Deterministic fallback execution
-- Full end-to-end incident lifecycle
-- Provider outage resilience (missing key / API error fallback)
-- Non-existent incident verification guard
+# 3. Upgrade pip and install dependencies
+pip install -r requirements.txt
+```
 
 ---
 
-## ☁️ Deployment on Vercel
+## 6. Environment Configuration
 
-SentinelFlow AI is engineered specifically for instantaneous, zero-configuration Vercel deployment.
+Copy `.env.example` to `.env`:
 
-1. Push the project to GitHub:
-   bash
+```bash
+cp .env.example .env
+```
+
+Edit `.env` to configure your settings:
+
+```ini
+# Optional: Google Gemini API Key from Google AI Studio (https://aistudio.google.com/)
+# If left empty, SentinelFlow AI automatically runs in full Deterministic Demo Mode!
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Configurable Gemini Model (Default: gemini-3.8-flash)
+GEMINI_MODEL=gemini-3.8-flash
+
+# Operational Mode: 'auto', 'deterministic', or 'gemini_only'
+SENTINELFLOW_MODE=auto
+
+# Server Port
+PORT=8501
+```
+
+> **Security Guarantee:** API keys are read server-side only. Keys are never logged, displayed in the web UI, or exported in client-side bundles.
+
+---
+
+## 7. How to Run the Application
+
+Launch the Streamlit web application:
+
+```bash
+python -m streamlit run app.py
+```
+
+The application will start and be available at:
+`http://localhost:8501`
+
+---
+
+## 8. How to Run Automated Tests
+
+Run the full pytest automated test suite:
+
+```bash
+python -m pytest -q
+```
+
+Expected output:
+```
+............................................                             [100%]
+44 passed in 0.84s
+```
+
+All 44 automated unit and integration tests run offline without requiring external network access or live Gemini API keys.
+
+---
+
+## 9. Deployment Guide (Streamlit Community Cloud)
+
+SentinelFlow AI is engineered for zero-configuration deployment to **Streamlit Community Cloud**:
+
+1. **Push Code to GitHub:**
+   ```bash
+   git add .
+   git commit -m "feat: complete SentinelFlow AI SOC platform"
    git push origin main
-   
-2. Import the repository in [Vercel](https://vercel.com/new).
-3. (Optional) In *Project Settings → Environment Variables*, add:
-   - GEMINI_API_KEY: Your Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
-   - GEMINI_MODEL: gemini-2.5-flash
-4. Click *Deploy*. The Next.js App Router build completes in ~30 seconds.
-
-*Deployment Checklist:*
-- [x] Production build succeeds.
-- [x] Dashboard loads responsively.
-- [x] Investigation works with Gemini or the clearly labelled fallback.
-- [x] Invalid requests and unsupported actions are rejected.
-- [x] Response approval is strictly enforced server-side.
-- [x] Independent state verification and audit history work as intended.
-- [x] No secrets are exposed to the browser.
-- [x] Keyboard navigation and accessibility contrast validated.
+   ```
+2. **Connect to Streamlit Cloud:**
+   - Navigate to [share.streamlit.io](https://share.streamlit.io).
+   - Select your repository (`imvedantlokhande-ai/SENTINELFLOW`) and branch (`main`).
+   - Set the Main file path to `app.py`.
+3. **Configure Secrets (Optional):**
+   - In the Streamlit Cloud App Settings under **Secrets**, add your optional Gemini API key:
+     ```toml
+     GEMINI_API_KEY = "your_actual_gemini_api_key"
+     GEMINI_MODEL = "gemini-3.8-flash"
+     ```
+   - If no secret is configured, the app seamlessly runs in Deterministic Demo Mode.
+4. **Deploy & Verify:**
+   - Click **Deploy**. The platform will install `requirements.txt` and launch the live application.
 
 ---
 
-## 🎬 Suggested Demo
+## 10. Security Engineering & Safeguards
 
-For a concise competition demonstration:
-
-1. Open the security dashboard.
-2. Select the simulated suspicious-login incident (INC-2026-8812).
-3. Run an investigation.
-4. Review the findings and supporting evidence tags.
-5. Inspect the proposed containment action.
-6. Approve the simulated action.
-7. Show the independent verification result and audit timeline.
-8. Attempt an unsupported or unapproved action in the negative sandbox to demonstrate safe rejection.
-9. Explain the efficiency metrics and the prototype boundaries.
+- **Strict Isolation:** Zero network calls to corporate endpoints or active directory systems.
+- **Allowlisted Actions Only:** The application rejects arbitrary code execution, raw shell commands, or unauthorized parameters.
+- **Pydantic Validation:** All incoming telemetry and Gemini model JSON outputs are strictly validated against Pydantic schemas. Hallucinated evidence IDs are automatically filtered out.
+- **Human Authorization Gate:** AI recommendations are purely advisory; containment actions require explicit human confirmation.
+- **Append-Only In-Memory Audit Trail:** Every action, actor, timestamp, and status transition is recorded with secret redaction.
 
 ---
 
-## 🔮 Future Improvements
+## 11. Known Limitations
 
-- Persistent incident storage with Firestore.
-- Firebase Authentication and role-based access control.
-- Integration with real security event sources in a controlled staging environment.
-- Evaluation datasets for measuring investigation accuracy.
-- Human feedback loop for improving investigation quality.
-- Advanced correlation and anomaly detection across enterprise tenants.
+- **In-Memory State Persistence:** Current demo state is stored in memory. Refreshing the browser or redeploying restarts the simulation from baseline.
+- **Simulated Infrastructure:** Threat maps, endpoint counts, and cloud statuses reflect seeded demonstration metrics.
+- **Rate Limits on Live AI:** When using free-tier Gemini API keys, provider quotas may trigger rate limits; in this case, the system gracefully falls back to deterministic rule analysis.
 
 ---
 
-## 👨‍💻 Project Information
+## 12. Synthetic Data Disclaimer
 
-*Project:* SentinelFlow AI  
-*Challenge:* PromptWars — Build Beyond AI  
-*Category:* AI-enabled cybersecurity and autonomous systems  
-*Repository:* [imvedantlokhande-ai/SENTINELFLOW](https://github.com/imvedantlokhande-ai/SENTINELFLOW)  
-*Deployment platform:* Vercel
-
-### Responsible AI Statement
-
-SentinelFlow AI is a prototype for demonstrating AI-assisted security investigations and controlled response automation. AI findings may be incomplete or incorrect and should be reviewed before consequential decisions. All competition scenarios use simulated security data and simulated response actions.
+> **IMPORTANT NOTICE:** All events, timestamps, IP addresses (RFC 5737: `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`), hostnames, employee identities, and threat telemetry within SentinelFlow AI are **strictly synthetic and fictional**. They are generated for demonstration and competition testing purposes only. No real personal data or corporate systems are accessed or affected.
 
 ---
 
-Built to demonstrate that effective AI systems need more than intelligence: they need security, reliability, accountability, and verifiable outcomes.
+## 13. License
+
+This project is licensed under the MIT License.
