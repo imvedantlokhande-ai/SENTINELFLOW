@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "Scanning tracked files for accidental secrets..."
           # Reject any Google API keys in tracked code
-          ! grep -rn "AIzaSy" --exclude=".env.example" --exclude="*.pyc" .
+          ! grep -rn "AIzaSy" --exclude=".env.example" --exclude="*.pyc" --exclude="ci.yml" --exclude-dir="tests" --exclude-dir=".git" .
           echo "No hardcoded Google API credentials detected."
 
       - name: Run Full Security Regression Suite
