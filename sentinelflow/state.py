@@ -4,6 +4,7 @@ Manages in-memory state across Streamlit rerenders, page transitions, and demo r
 Provides consistent references to active incidents, synthetic events, and response registries.
 """
 
+import time
 from typing import Dict, Any, List, Optional
 from sentinelflow.config import GEMINI_API_KEY, DEFAULT_GEMINI_MODEL, APP_MODE
 from sentinelflow.models import Incident, SecurityEvent
@@ -55,6 +56,12 @@ def init_session_state(st_module) -> None:
         # Config state
         st.session_state.gemini_api_key = GEMINI_API_KEY
         st.session_state.gemini_model = DEFAULT_GEMINI_MODEL
+
+        # Privacy, Rate Limiting & Telemetry
+        st.session_state.cookie_consent = None
+        st.session_state.show_cookie_settings = False
+        st.session_state.rate_limits = {}
+        st.session_state.analytics_events = []
 
         st.session_state.initialized = True
 
@@ -115,3 +122,47 @@ def get_raw_state_dict(st_module) -> Dict[str, Any]:
         "synthetic_escalated_incidents": st_module.session_state.synthetic_escalated_incidents,
         "synthetic_monitored_incidents": st_module.session_state.synthetic_monitored_incidents,
     }
+
+
+def check_rate_limit(st_module, action_key: str, max_calls: int = 15, period_seconds: int = 60) -> bool:
+    """Check if the session has exceeded the rate limit for a specific action.
+
+    Returns:
+        True if action is allowed; False if rate limited.
+    """
+    if "rate_limits" not in st_module.session_state:
+        st_module.session_state["rate_limits"] = {}
+
+    now = time.time()
+    rate_limits = st_module.session_state["rate_limits"]
+    history = rate_limits.get(action_key, [])
+    # Filter timestamps within window
+    recent = [t for t in history if now - t < period_seconds]
+
+    if len(recent) >= max_calls:
+        rate_limits[action_key] = recent
+        return False
+
+    recent.append(now)
+    rate_limits[action_key] = recent
+    return True
+
+
+def record_telemetry_event(st_module, event_name: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    """Record an operational telemetry event strictly if the user has granted analytics cookie consent.
+
+    Never records personal identifiable information (PII) or secrets.
+    """
+    consent = st_module.session_state.get("cookie_consent")
+    if not consent or consent.get("analytics") is not True:
+        return  # Respect user privacy: do not record if consent not explicitly given
+
+    if "analytics_events" not in st_module.session_state:
+        st_module.session_state["analytics_events"] = []
+
+    st_module.session_state["analytics_events"].append({
+        "event": event_name,
+        "timestamp": time.time(),
+        "meta": metadata or {},
+    })
+

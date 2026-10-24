@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /Incidents
+Allow: /Threat_Intelligence
+Allow: /Response_Center
+Allow: /Audit_Timeline
+Allow: /Analytics
+Allow: /Settings
+Allow: /Privacy_Policy
+Allow: /Terms
+Disallow: /api/
+Disallow: /_stcore/
+Disallow: /*?*api_key=
+
+Sitemap: https://sentinelflow.ai/sitemap.xml

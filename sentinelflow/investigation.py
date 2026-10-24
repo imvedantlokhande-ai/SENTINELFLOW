@@ -4,7 +4,7 @@ Coordinates AI-powered (Gemini) and deterministic rule-based investigation workf
 Maintains clear distinction between analysis modes and ensures human review requirements.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 from sentinelflow.config import APP_MODE
 from sentinelflow.models import SecurityEvent, CorrelatedGroup, InvestigationFinding, Incident
 from sentinelflow.risk_engine import RiskEngine
@@ -24,6 +24,7 @@ class InvestigationEngine:
         events: List[SecurityEvent],
         correlation: CorrelatedGroup,
         force_mode: Optional[str] = None,
+        st_module: Optional[Any] = None,
     ) -> Tuple[InvestigationFinding, Optional[str]]:
         """Run investigation on the incident events.
 
@@ -32,6 +33,16 @@ class InvestigationEngine:
         """
         mode = (force_mode or APP_MODE).lower()
         fallback_warning: Optional[str] = None
+
+        # Check rate limit if Streamlit module context is provided
+        if st_module is not None:
+            from sentinelflow.state import check_rate_limit
+            if not check_rate_limit(st_module, "gemini_investigation", max_calls=15, period_seconds=60):
+                fallback_warning = (
+                    "Session rate limit reached (max 15 AI requests/min). Switched to deterministic rule-based analysis."
+                )
+                finding = self.run_deterministic_investigation(incident, events, correlation)
+                return finding, fallback_warning
 
         # Check if Gemini AI mode should be attempted
         if mode in ("gemini_ai", "gemini_only", "auto") and self.gemini_client.is_configured():

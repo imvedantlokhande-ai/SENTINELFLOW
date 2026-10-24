@@ -4,9 +4,21 @@ Maintains an in-memory chronological record of all analyst actions, AI investiga
 response approvals, simulations, and verification results.
 """
 
+import re
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from sentinelflow.models import AuditEntry
+
+
+def sanitize_text(text: str) -> str:
+    """Sanitize technical text to redact any API keys, tokens, or credential patterns."""
+    if not text:
+        return ""
+    # Redact Google API key patterns like AIzaSy...
+    text = re.sub(r"AIza[0-9A-Za-z\-_]{30,45}", "[REDACTED_API_KEY]", text)
+    # Redact generic bearer tokens or secret assignments
+    text = re.sub(r"(api_key|token|password|secret)\s*[:=]\s*[^\s]+", r"\1: [REDACTED]", text, flags=re.IGNORECASE)
+    return text
 
 
 class AuditTrail:
@@ -34,6 +46,10 @@ class AuditTrail:
         for k in list(clean_metadata.keys()):
             if "key" in k.lower() or "secret" in k.lower() or "token" in k.lower():
                 clean_metadata[k] = "[REDACTED_SECRET]"
+            elif isinstance(clean_metadata[k], str):
+                clean_metadata[k] = sanitize_text(clean_metadata[k])
+
+        clean_details = sanitize_text(details)
 
         entry = AuditEntry(
             entry_id=entry_id,
@@ -43,7 +59,7 @@ class AuditTrail:
             action_id=action_id,
             status=status,
             actor=actor,
-            details=details,
+            details=clean_details,
             metadata=clean_metadata,
         )
         self._entries.append(entry)

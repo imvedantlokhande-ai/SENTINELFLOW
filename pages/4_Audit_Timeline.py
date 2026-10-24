@@ -9,15 +9,24 @@ from sentinelflow.ui_components import (
     render_header,
     render_simulation_banner,
     render_status_badge,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 
-st.set_page_config(page_title="Audit Timeline - SentinelFlow AI", page_icon="📜", layout="wide")
+st.set_page_config(page_title="Audit Timeline | SentinelFlow AI", page_icon="📜", layout="wide")
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="Audit Timeline | SentinelFlow AI",
+    description="Inspect the immutable append-only application audit trail tracking every security analysis, containment approval, and verification event.",
+    path="/Audit_Timeline",
+)
 
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override)
 render_simulation_banner()
+render_cookie_consent()
 
 st.markdown("<h2 style='color:#ffffff; margin-bottom:0.25rem;'>📜 Append-Only Application Audit Trail</h2>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:0.8rem; color:#94a3b8;'>Chronological ledger of security lifecycle events, AI investigations, analyst decisions, and simulated executions.</p>", unsafe_allow_html=True)
@@ -56,3 +65,16 @@ for entry in entries:
         """,
         unsafe_allow_html=True,
     )
+
+# Export Audit Trail as JSON
+audit_json = json.dumps([e.model_dump() for e in entries], indent=2)
+st.download_button(
+    label="📥 Export Filtered Audit Trail (JSON)",
+    data=audit_json,
+    file_name="sentinelflow_audit_trail.json",
+    mime="application/json",
+    type="secondary",
+)
+
+render_footer()
+

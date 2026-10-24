@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#0a0e17" />
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="2" />
+  <!-- Cyber Shield Path -->
+  <path d="M 32 10 L 48 17 C 48 33 42 47 32 54 C 22 47 16 33 16 17 Z" 
+        fill="none" 
+        stroke="url(#shieldGrad)" 
+        stroke-width="3" 
+        stroke-linejoin="round" />
+  <!-- Inner Circuit Core -->
+  <path d="M 32 20 L 40 25 C 40 35 36 43 32 47 C 28 43 24 35 24 25 Z" 
+        fill="rgba(0, 240, 255, 0.2)" 
+        stroke="#00f0ff" 
+        stroke-width="1.5" />
+  <circle cx="32" cy="32" r="3" fill="#00f0ff" />
+</svg>

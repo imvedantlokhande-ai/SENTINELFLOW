@@ -23,6 +23,9 @@ from sentinelflow.ui_components import (
     render_simulation_banner,
     render_severity_badge,
     render_status_badge,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 from sentinelflow.event_correlation import EventCorrelationEngine
 from sentinelflow.investigation import InvestigationEngine
@@ -30,9 +33,14 @@ from sentinelflow.response_engine import ResponseEngine
 from sentinelflow.verification import VerificationEngine
 from sentinelflow.analytics import build_entity_relationship_graph
 
-st.set_page_config(page_title="Incidents - SentinelFlow AI", page_icon="📋", layout="wide")
+st.set_page_config(page_title="Incident Workspace | SentinelFlow AI", page_icon="📋", layout="wide")
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="Incident Workspace | SentinelFlow AI",
+    description="Inspect correlated synthetic cybersecurity incidents, examine entity relationship networks, and review AI triage findings.",
+    path="/Incidents",
+)
 
 correlation_engine = EventCorrelationEngine()
 investigation_engine = InvestigationEngine(
@@ -45,6 +53,7 @@ verification_engine = VerificationEngine()
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override, gemini_ready=investigation_engine.gemini_client.is_configured())
 render_simulation_banner()
+render_cookie_consent()
 
 st.markdown("<h2 style='color:#ffffff; margin-bottom:0.5rem;'>📋 Security Incidents & Correlation Center</h2>", unsafe_allow_html=True)
 
@@ -124,3 +133,6 @@ for inc in incidents:
             st.session_state.selected_incident_id = inc.incident_id
             st.success(f"Incident {inc.incident_id} selected as active.")
             st.rerun()
+
+render_footer()
+

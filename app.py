@@ -28,6 +28,7 @@ from sentinelflow.state import (
     get_incident_by_id,
     get_events_for_incident,
     get_raw_state_dict,
+    record_telemetry_event,
 )
 from sentinelflow.ui_components import (
     inject_custom_css,
@@ -36,6 +37,9 @@ from sentinelflow.ui_components import (
     render_kpi_card,
     render_severity_badge,
     render_status_badge,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 from sentinelflow.event_correlation import EventCorrelationEngine
 from sentinelflow.investigation import InvestigationEngine
@@ -60,6 +64,11 @@ st.set_page_config(
 # Initialize application state & inject theme
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="SentinelFlow AI - Autonomous Cybersecurity Investigation & Response Simulation",
+    description="AI-assisted cybersecurity incident investigation and safe containment simulation platform with human-in-the-loop oversight.",
+    path="/",
+)
 
 # Instantiate core engines
 correlation_engine = EventCorrelationEngine()
@@ -91,6 +100,7 @@ render_header(
     gemini_ready=investigation_engine.gemini_client.is_configured(),
 )
 render_simulation_banner()
+render_cookie_consent()
 
 # Quick Navigation Bar (Horizontal Tab Controls)
 nav_tabs = st.tabs([
@@ -406,7 +416,10 @@ with nav_tabs[0]:
                 current_events,
                 current_corr,
                 force_mode=st.session_state.analysis_mode_override,
+                st_module=st,
             )
+            if warning_msg:
+                st.warning(warning_msg)
             current_inc.finding = finding
             # Propose action if applicable
             if finding.proposed_action and not current_inc.proposed_action:
@@ -584,6 +597,15 @@ with nav_tabs[0]:
                                 action_id=prop.action_id,
                                 actor="verification_engine",
                                 details=verif.details,
+                            )
+                            record_telemetry_event(
+                                st,
+                                "ACTION_APPROVED_SIMULATION",
+                                {
+                                    "incident_id": current_inc.incident_id,
+                                    "action": prop.action_name,
+                                    "verified": verif.passed,
+                                },
                             )
                             st.rerun()
 
@@ -789,11 +811,18 @@ with nav_tabs[6]:
         )
         saved = st.form_submit_button("💾 Save Settings", type="primary")
         if saved:
+            has_error = False
             if api_input and not api_input.startswith("•••"):
-                st.session_state.gemini_api_key = api_input.strip()
-            st.session_state.gemini_model = model_input.strip()
-            st.success("Settings updated successfully.")
-            st.rerun()
+                clean = api_input.strip()
+                if len(clean) < 20:
+                    st.error("Validation Error: API Key must be at least 20 characters.")
+                    has_error = True
+                else:
+                    st.session_state.gemini_api_key = clean
+            if not has_error:
+                st.session_state.gemini_model = model_input.strip()
+                st.success("Settings updated successfully.")
+                st.rerun()
 
     st.markdown(
         f"""
@@ -810,3 +839,6 @@ with nav_tabs[6]:
         """,
         unsafe_allow_html=True,
     )
+
+render_footer()
+

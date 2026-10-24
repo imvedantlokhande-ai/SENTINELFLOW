@@ -1,0 +1,26 @@
+# SentinelFlow AI - Production Caddyfile Reverse Proxy
+# Provides automatic HTTPS, HSTS, and WebSocket support for Streamlit.
+
+sentinelflow.ai, www.sentinelflow.ai {
+    # Force HTTPS & modern security headers
+    header {
+        # Strict-Transport-Security (HSTS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        
+        # Clickjacking & MIME-sniffing protection
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Content Security Policy for Streamlit & Fonts
+        Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' wss: https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline';"
+    }
+
+    # Proxy to Streamlit internal service
+    reverse_proxy localhost:8501 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto https
+    }
+}

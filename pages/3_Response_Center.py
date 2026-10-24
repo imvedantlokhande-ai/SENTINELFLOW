@@ -17,13 +17,21 @@ from sentinelflow.ui_components import (
     render_simulation_banner,
     render_status_badge,
     render_severity_badge,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 from sentinelflow.response_engine import ResponseEngine
 from sentinelflow.verification import VerificationEngine
 
-st.set_page_config(page_title="Response Center - SentinelFlow AI", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Response Center | SentinelFlow AI", page_icon="⚡", layout="wide")
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="Human-in-the-Loop Response Center | SentinelFlow AI",
+    description="Review, authorize, and verify simulated containment actions with strict human oversight and automated independent verification.",
+    path="/Response_Center",
+)
 
 response_engine = ResponseEngine()
 verification_engine = VerificationEngine()
@@ -31,6 +39,7 @@ verification_engine = VerificationEngine()
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override)
 render_simulation_banner()
+render_cookie_consent()
 
 st.markdown("<h2 style='color:#ffffff; margin-bottom:0.25rem;'>⚡ Human-in-the-Loop Response Center</h2>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:0.8rem; color:#94a3b8;'>Strictly allowlisted simulated containment actions requiring analyst authorization.</p>", unsafe_allow_html=True)
@@ -143,3 +152,6 @@ with tab_history:
                 """,
                 unsafe_allow_html=True,
             )
+
+render_footer()
+

@@ -8,16 +8,25 @@ from sentinelflow.ui_components import (
     render_header,
     render_simulation_banner,
     render_severity_badge,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 from sentinelflow.analytics import build_global_threat_map, build_attack_vectors_bar_chart
 
-st.set_page_config(page_title="Threat Intel - SentinelFlow AI", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="Threat Intelligence | SentinelFlow AI", page_icon="🎯", layout="wide")
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="Global Threat Intelligence | SentinelFlow AI",
+    description="Track synthetic global adversary attack vectors, geographic coordinates, and simulated security campaign telemetry.",
+    path="/Threat_Intelligence",
+)
 
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override)
 render_simulation_banner()
+render_cookie_consent()
 
 st.markdown("<h2 style='color:#ffffff; margin-bottom:0.25rem;'>🌍 Global Threat Intelligence & Adversary Tracking</h2>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:0.8rem; color:#94a3b8;'>Simulated adversary campaigns, geographic vectors, and telemetry indicators.</p>", unsafe_allow_html=True)
@@ -56,3 +65,6 @@ with t_c2:
             """,
             unsafe_allow_html=True,
         )
+
+render_footer()
+

@@ -13,6 +13,9 @@ from sentinelflow.ui_components import (
     render_header,
     render_simulation_banner,
     render_kpi_card,
+    render_seo_meta,
+    render_cookie_consent,
+    render_footer,
 )
 from sentinelflow.analytics import (
     calculate_soc_metrics,
@@ -20,9 +23,14 @@ from sentinelflow.analytics import (
     build_attack_vectors_bar_chart,
 )
 
-st.set_page_config(page_title="Analytics - SentinelFlow AI", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Performance & Analytics | SentinelFlow AI", page_icon="📈", layout="wide")
 init_session_state(st)
 inject_custom_css()
+render_seo_meta(
+    title="SOC Performance & Analytics | SentinelFlow AI",
+    description="Operational performance benchmarks, verification accuracy, and adversary frequency distributions in SentinelFlow AI.",
+    path="/Analytics",
+)
 
 metrics = calculate_soc_metrics(
     incidents=st.session_state.incidents,
@@ -33,6 +41,7 @@ metrics = calculate_soc_metrics(
 pending_count = sum(1 for i in st.session_state.incidents if i.proposed_action and i.proposed_action.status in ("proposed", "awaiting_approval"))
 render_header(pending_approvals=pending_count, active_mode=st.session_state.analysis_mode_override)
 render_simulation_banner()
+render_cookie_consent()
 
 st.markdown("<h2 style='color:#ffffff; margin-bottom:0.25rem;'>📈 SOC Operational Analytics & Efficiency</h2>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:0.8rem; color:#94a3b8;'>Measured operational metrics calculated directly from session telemetry and analyst actions.</p>", unsafe_allow_html=True)
@@ -71,3 +80,20 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Consent-Aware Operational Telemetry Status
+consent = st.session_state.get("cookie_consent")
+has_analytics_consent = consent and consent.get("analytics") is True
+
+with st.expander("📊 Privacy-Respecting Operational Telemetry Log", expanded=False):
+    if not has_analytics_consent:
+        st.info("ℹ️ Analytics telemetry is currently **OFF** (cookie consent not granted). No usage data is being recorded.")
+    else:
+        events = st.session_state.get("analytics_events", [])
+        st.success(f"✅ Operational telemetry is **ACTIVE** with user consent. {len(events)} anonymous performance event(s) recorded.")
+        if events:
+            for ev in events[-5:]:
+                st.write(f"- `{ev['event']}` at timestamp `{ev['timestamp']}` | {ev['meta']}")
+
+render_footer()
+
