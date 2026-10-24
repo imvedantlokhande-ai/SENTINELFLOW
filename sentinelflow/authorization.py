@@ -103,13 +103,13 @@ def check_permission(
     Returns:
         (allowed: bool, reason_if_denied: Optional[str])
     """
-    # 1. Require active authenticated session
-    if session is None or not session.is_authenticated:
+    # 1. Validate session integrity (authenticated, not expired, not revoked, account active)
+    if session is None:
         return False, "Authentication required. Please log in to perform this operation."
 
-    # 2. Check session expiration
-    if session.is_expired():
-        return False, f"Session expired at {session.expires_at}. Please re-authenticate."
+    is_valid, invalid_reason = session.is_valid()
+    if not is_valid:
+        return False, invalid_reason or "Session is not valid. Please re-authenticate."
 
     # 3. Check role authorization matrix
     user_role = session.role.lower()

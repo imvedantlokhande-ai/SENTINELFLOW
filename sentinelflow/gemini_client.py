@@ -55,16 +55,19 @@ class GeminiInvestigationClient:
                 f"The official 'google-genai' SDK is not installed in the environment: {e}"
             )
 
+        from sentinelflow.audit import sanitize_text
+
         # Context compilation - sanitize untrusted telemetry and bound input size
-        valid_event_ids = set(e.event_id for e in events)
+        bounded_events = events[:50]
+        valid_event_ids = set(e.event_id for e in bounded_events)
         injections_detected = []
         telemetry_summary = []
-        for e in events:
+        for e in bounded_events:
             is_injected, matched_patterns = detect_prompt_injection(e.description)
             if is_injected:
                 injections_detected.extend(matched_patterns)
             
-            clean_desc = sanitize_untrusted_telemetry(e.description)
+            clean_desc = sanitize_text(sanitize_untrusted_telemetry(e.description))
             telemetry_summary.append({
                 "event_id": e.event_id,
                 "timestamp": e.timestamp,
@@ -117,6 +120,7 @@ Produce a structured JSON investigation report with these EXACT fields:
                     "system_instruction": system_instruction,
                     "response_mime_type": "application/json",
                     "temperature": 0.2,
+                    "max_output_tokens": 2048,
                 },
             )
 

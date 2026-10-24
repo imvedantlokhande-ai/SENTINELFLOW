@@ -136,6 +136,8 @@ class AuditEntry(BaseModel):
     actor: str = Field(default="analyst", description="analyst, system, gemini_engine, response_engine, verification_engine")
     details: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    prev_hash: Optional[str] = None
+    entry_hash: Optional[str] = None
 
 
 class Incident(BaseModel):

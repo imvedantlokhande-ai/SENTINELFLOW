@@ -25,11 +25,20 @@ class ResponseExecutionError(Exception):
     pass
 
 
+import threading
+
 class ResponseEngine:
-    """Safely manages and executes simulated incident containment actions."""
+    """Safely manages and executes simulated incident containment actions with concurrency protection."""
 
     def __init__(self):
         self.allowed_actions = ALLOWED_ACTIONS
+        self._lock = threading.RLock()
+        self._executed_action_ids: set = set()
+
+    def reset_execution_registry(self) -> None:
+        """Clear execution registry (for tests and state resets)."""
+        with self._lock:
+            self._executed_action_ids.clear()
 
     def propose_action(
         self,
@@ -142,75 +151,82 @@ class ResponseEngine:
         - Action is not in allowlist
         - Target is invalid
         """
-        # 0. Check server-side authorization if session provided
-        if session is not None:
-            enforce_permission(
-                session=session,
-                permission=PERM_EXECUTE_SIMULATION,
-                incident=incident,
-                target_id=action_request.target_id,
-                action_request=action_request,
-            )
+        with self._lock:
+            # 0. Check server-side authorization if session provided
+            if session is not None:
+                enforce_permission(
+                    session=session,
+                    permission=PERM_EXECUTE_SIMULATION,
+                    incident=incident,
+                    target_id=action_request.target_id,
+                    action_request=action_request,
+                )
 
-        # 1. Reject duplicate execution
-        if action_request.executed_at is not None or action_request.status in ("executed_simulation", "verified"):
-            raise ResponseExecutionError(
-                f"Duplicate execution blocked: Action {action_request.action_id} was already executed at {action_request.executed_at}."
-            )
+            # 1. Reject duplicate execution
+            if (
+                action_request.action_id in self._executed_action_ids
+                or action_request.executed_at is not None
+                or action_request.status in ("executed_simulation", "verified")
+            ):
+                raise ResponseExecutionError(
+                    f"Duplicate execution blocked: Action {action_request.action_id} was already executed."
+                )
 
-        # 2. Require approval
-        if action_request.status != "approved":
-            raise ResponseExecutionError(
-                f"Action execution blocked: Action must be in 'approved' status, but is '{action_request.status}'."
-            )
+            # 2. Require approval
+            if action_request.status != "approved":
+                raise ResponseExecutionError(
+                    f"Action execution blocked: Action must be in 'approved' status, but is '{action_request.status}'."
+                )
 
-        # 3. Validate action name in allowlist
-        if action_request.action_name not in self.allowed_actions:
-            raise ResponseExecutionError(
-                f"Unsupported action '{action_request.action_name}'."
-            )
+            # 3. Validate action name in allowlist
+            if action_request.action_name not in self.allowed_actions:
+                raise ResponseExecutionError(
+                    f"Unsupported action '{action_request.action_name}'."
+                )
 
-        action = action_request.action_name
-        target_id = action_request.target_id
-        incident_id = action_request.incident_id
+            self._executed_action_ids.add(action_request.action_id)
 
-        # Update synthetic state dictionary based on action
-        # Initialize synthetic registries if not present
-        if "synthetic_revoked_sessions" not in demo_state:
-            demo_state["synthetic_revoked_sessions"] = set()
-        if "synthetic_locked_accounts" not in demo_state:
-            demo_state["synthetic_locked_accounts"] = set()
-        if "synthetic_escalated_incidents" not in demo_state:
-            demo_state["synthetic_escalated_incidents"] = set()
-        if "synthetic_monitored_incidents" not in demo_state:
-            demo_state["synthetic_monitored_incidents"] = set()
+            action = action_request.action_name
+            target_id = action_request.target_id
+            incident_id = action_request.incident_id
 
-        if action == "revoke_session":
-            demo_state["synthetic_revoked_sessions"].add(target_id)
+            # Update synthetic state dictionary based on action
+            # Initialize synthetic registries if not present
+            if "synthetic_revoked_sessions" not in demo_state:
+                demo_state["synthetic_revoked_sessions"] = set()
+            if "synthetic_locked_accounts" not in demo_state:
+                demo_state["synthetic_locked_accounts"] = set()
+            if "synthetic_escalated_incidents" not in demo_state:
+                demo_state["synthetic_escalated_incidents"] = set()
+            if "synthetic_monitored_incidents" not in demo_state:
+                demo_state["synthetic_monitored_incidents"] = set()
 
-        elif action == "lock_account":
-            demo_state["synthetic_locked_accounts"].add(target_id)
+            if action == "revoke_session":
+                demo_state["synthetic_revoked_sessions"].add(target_id)
 
-        elif action == "escalate_incident":
-            demo_state["synthetic_escalated_incidents"].add(incident_id)
+            elif action == "lock_account":
+                demo_state["synthetic_locked_accounts"].add(target_id)
 
-        elif action == "mark_monitoring":
-            demo_state["synthetic_monitored_incidents"].add(incident_id)
+            elif action == "escalate_incident":
+                demo_state["synthetic_escalated_incidents"].add(incident_id)
 
-        # Update incident status in demo state incidents list if present
-        if "incidents" in demo_state:
-            for inc in demo_state["incidents"]:
-                if inc.incident_id == incident_id:
-                    if action in ("revoke_session", "lock_account"):
-                        inc.status = "RESOLVED"
-                    elif action == "escalate_incident":
-                        inc.status = "ESCALATED"
-                    elif action == "mark_monitoring":
-                        inc.status = "MONITORING"
-                    break
+            elif action == "mark_monitoring":
+                demo_state["synthetic_monitored_incidents"].add(incident_id)
 
-        updated_request = action_request.model_copy()
-        updated_request.status = "executed_simulation"
-        updated_request.executed_at = datetime.now(timezone.utc).isoformat()
+            # Update incident status in demo state incidents list if present
+            if "incidents" in demo_state:
+                for inc in demo_state["incidents"]:
+                    if inc.incident_id == incident_id:
+                        if action in ("revoke_session", "lock_account"):
+                            inc.status = "RESOLVED"
+                        elif action == "escalate_incident":
+                            inc.status = "ESCALATED"
+                        elif action == "mark_monitoring":
+                            inc.status = "MONITORING"
+                        break
 
-        return updated_request, demo_state
+            updated_request = action_request.model_copy()
+            updated_request.status = "executed_simulation"
+            updated_request.executed_at = datetime.now(timezone.utc).isoformat()
+
+            return updated_request, demo_state

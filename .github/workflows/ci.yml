@@ -1,0 +1,42 @@
+name: SentinelFlow AI - Security & Quality Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-verify:
+    name: Security Regression & SOC Verification Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Automated Secret Leakage Check
+        run: |
+          echo "Scanning tracked files for accidental secrets..."
+          # Reject any Google API keys in tracked code
+          ! grep -rn "AIzaSy" --exclude=".env.example" --exclude="*.pyc" .
+          echo "No hardcoded Google API credentials detected."
+
+      - name: Run Full Security Regression Suite
+        run: |
+          python -m pytest -v --maxfail=1
+
+      - name: Execute Efficiency & Correlation Benchmark
+        run: |
+          python benchmark.py

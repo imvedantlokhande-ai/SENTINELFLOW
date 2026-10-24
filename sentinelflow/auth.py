@@ -65,6 +65,45 @@ DEMO_USERS: Dict[str, Dict[str, Any]] = {
 }
 
 
+# Centralized in-memory session revocation and disabled account registry
+REVOKED_SESSION_UIDS: set = set()
+DISABLED_ACCOUNT_EMAILS: set = set()
+
+
+def revoke_user_session(uid: str) -> None:
+    """Explicitly revoke a user session UID."""
+    if uid:
+        REVOKED_SESSION_UIDS.add(uid.strip())
+
+
+def is_session_revoked(uid: str) -> bool:
+    """Return True if session UID has been revoked."""
+    return uid.strip() in REVOKED_SESSION_UIDS if uid else False
+
+
+def disable_user_account(email: str) -> None:
+    """Disable user account by email address."""
+    if email:
+        DISABLED_ACCOUNT_EMAILS.add(email.strip().lower())
+
+
+def enable_user_account(email: str) -> None:
+    """Re-enable a user account."""
+    if email:
+        DISABLED_ACCOUNT_EMAILS.discard(email.strip().lower())
+
+
+def is_account_disabled(email: str) -> bool:
+    """Return True if account has been marked disabled."""
+    return email.strip().lower() in DISABLED_ACCOUNT_EMAILS if email else False
+
+
+def clear_revocation_registry() -> None:
+    """Clear all revocations and disabled accounts (for tests and reset)."""
+    REVOKED_SESSION_UIDS.clear()
+    DISABLED_ACCOUNT_EMAILS.clear()
+
+
 class UserSession(BaseModel):
     """Authenticated user session with role-based access attributes."""
     uid: str = Field(..., description="Unique immutable user identifier")
@@ -83,6 +122,22 @@ class UserSession(BaseModel):
     def get_remaining_seconds(self) -> int:
         """Return seconds remaining before session expiration."""
         return max(0, int(self.expires_at - time.time()))
+
+    def is_valid(self) -> Tuple[bool, Optional[str]]:
+        """Comprehensive verification of session validity and account status.
+
+        Returns:
+            (valid: bool, reason_if_invalid: Optional[str])
+        """
+        if not self.is_authenticated:
+            return False, "User is not authenticated."
+        if self.is_expired():
+            return False, f"Session expired at {self.expires_at}. Please log in again."
+        if is_session_revoked(self.uid):
+            return False, f"Session '{self.uid}' has been revoked by security administration."
+        if is_account_disabled(self.email):
+            return False, f"Account '{self.email}' has been disabled. Access denied."
+        return True, None
 
 
 class AuthenticationError(Exception):
